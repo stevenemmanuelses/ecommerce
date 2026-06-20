@@ -71,6 +71,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -113,6 +114,17 @@ DATABASES = {
     }
 }
 
+# Add SSL connection options for secure database hosting like Aiven MySQL
+db_ssl_mode = os.getenv('DB_SSL_MODE')
+db_host = os.getenv('DB_HOST', '')
+if db_ssl_mode or 'aivencloud.com' in db_host:
+    ssl_mode = db_ssl_mode or 'REQUIRED'
+    DATABASES['default']['OPTIONS'] = {
+        'ssl': {
+            'ssl_mode': ssl_mode
+        }
+    }
+
 AUTH_PASSWORD_VALIDATORS = []
 
 SESSION_COOKIE_AGE = 60
@@ -126,6 +138,16 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
