@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block content %}
+<section class="order-tracking-page">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Lacak Pesanan</p>
+      <h2>Order #{{ order.id }}</h2>
+      <p>Tracking code: <strong>{{ order.tracking_code }}</strong></p>
+    </div>
+  </div>
+
+  <div class="tracking-card" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 24px;">
+    <div class="tracking-summary" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; background: rgba(255,255,255,0.02); padding: 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+      <div class="tracking-detail">
+        <span style="font-size: 0.85rem; color: #9ca3af; display: block; margin-bottom: 4px;">Status Saat Ini</span>
+        <strong style="color: #60a5fa; font-size: 1.1rem;">{{ order.get_status_display }}</strong>
+      </div>
+      <div class="tracking-detail">
+        <span style="font-size: 0.85rem; color: #9ca3af; display: block; margin-bottom: 4px;">Tanggal Pesanan</span>
+        <strong style="color: #f3f4f6;">{{ order.created_at|date:'d M Y H:i' }}</strong>
+      </div>
+      <div class="tracking-detail">
+        <span style="font-size: 0.85rem; color: #9ca3af; display: block; margin-bottom: 4px;">Kurir / Resi</span>
+        <strong style="color: #f3f4f6; text-transform: uppercase;">{{ order.courier }} ({{ order.tracking_code }})</strong>
+      </div>
+      <div class="tracking-detail">
+        <span style="font-size: 0.85rem; color: #9ca3af; display: block; margin-bottom: 4px;">Total Tagihan</span>
+        <strong style="color: #60a5fa;">Rp {{ order.total_price_with_code|floatformat:0|intcomma }}</strong>
+      </div>
+      <div class="tracking-detail">
+        <span style="font-size: 0.85rem; color: #9ca3af; display: block; margin-bottom: 4px;">Pembayaran</span>
+        <strong style="color: #34d399;">{{ order.payment_status_display }}</strong>
+      </div>
+    </div>
+
+    <!-- Timeline Design -->
+    <div class="tracking-steps-container" style="position: relative; margin: 10px 0;">
+      <div class="tracking-steps-line" style="position: absolute; left: 19px; top: 12px; bottom: 12px; width: 3px; background: rgba(255,255,255,0.1); z-index: 1;"></div>
+      <div class="tracking-steps" style="display: flex; flex-direction: column; gap: 28px; position: relative; z-index: 2;">
+        {% for step in order.get_status_steps %}
+          <div class="tracking-step" style="display: flex; gap: 16px; align-items: flex-start;">
+            <div class="step-icon-wrapper" style="width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1rem;
+              {% if step.active %}
+                {% if order.status == 'cancelled' %}
+                  background: rgba(239, 68, 68, 0.2); color: #f87171; border: 2px solid #f87171;
+                {% else %}
+                  background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 2px solid #60a5fa;
+                {% endif %}
+              {% else %}
+                background: #1f2937; color: #9ca3af; border: 2px solid rgba(255,255,255,0.1);
+              {% endif %}">
+              {% if order.status == 'cancelled' and step.key == 'cancelled' %}
+                ✕
+              {% else %}
+                {{ forloop.counter }}
+              {% endif %}
+            </div>
+            <div class="step-content" style="padding-top: 8px;">
+              <h4 style="margin: 0; font-size: 1.05rem; font-weight: 600; {% if step.active %}color: #f3f4f6;{% else %}color: #9ca3af;{% endif %}">{{ step.label }}</h4>
+              {% if step.active %}
+                <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: #9ca3af;">Tahap ini telah diselesaikan/aktif.</p>
+              {% else %}
+                <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: #6b7280;">Menunggu tahap berikutnya.</p>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Actions Block -->
+    <div class="tracking-actions" style="display: flex; gap: 12px; align-items: center; margin-top: 12px; flex-wrap: wrap; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 20px;">
+      {% if order.status == 'delivered' %}
+        <a class="action-button secondary" href="{% url 'store:order_review' order.id %}" style="padding: 10px 20px; border-radius: 8px; background: rgba(255,255,255,0.08); color: white; text-decoration: none; font-size: 0.95rem; font-weight: 500; border: 1px solid rgba(255,255,255,0.1);">Berikan Review</a>
+      {% endif %}
+
+      {% if order.status != 'cancelled' %}
+        <a class="action-button secondary" href="{% url 'store:download_invoice' order.id %}" style="padding: 10px 20px; border-radius: 8px; background: rgba(16, 185, 129, 0.1); color: #34d399; text-decoration: none; font-size: 0.95rem; font-weight: 500; border: 1px solid rgba(16, 185, 129, 0.2); display: flex; align-items: center; gap: 8px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          Unduh Invoice
+        </a>
+      {% endif %}
+
+      {% if order.status == 'pending_payment' and not order.paid %}
+        <a class="action-button" href="{% url 'store:cancel_order' order.id %}" onclick="return confirm('Apakah Anda yakin ingin membatalkan pesanan ini?');" style="padding: 10px 20px; border-radius: 8px; background: rgba(239, 68, 68, 0.1); color: #f87171; text-decoration: none; font-size: 0.95rem; font-weight: 500; border: 1px solid rgba(239, 68, 68, 0.2);">Batal Pesanan</a>
+      {% endif %}
+
+      <a class="primary-button" href="{% url 'store:account' %}" style="padding: 10px 20px; border-radius: 8px; background: #3b82f6; color: white; text-decoration: none; font-size: 0.95rem; font-weight: 500; margin-left: auto;">Kembali ke Akun Saya</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

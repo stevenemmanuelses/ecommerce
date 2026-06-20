@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="auth-panel">
+  <div class="auth-card">
+    <div class="auth-header">
+      <p class="eyebrow">Masuk</p>
+      <h2>Login ke Verity</h2>
+      <p>Masuk untuk mengakses keranjang, checkout cepat, dan data alamat pengiriman Anda.</p>
+    </div>
+    {% if error %}
+      <div class="alert">{{ error }}</div>
+    {% endif %}
+    <form method="post" class="auth-form">
+      {% csrf_token %}
+      {% if next %}
+        <input type="hidden" name="next" value="{{ next }}">
+      {% endif %}
+      <label>Username</label>
+      <input type="text" name="username" required>
+      <label>Password</label>
+      <input type="password" name="password" required>
+      <button type="submit">Login</button>
+    </form>
+    <div class="auth-help">
+      <p>Belum punya akun lengkap? Daftar sekarang dan tambahkan email, telepon, serta alamat pengiriman untuk pengalaman belanja yang lebih cepat.</p>
+      <p class="auth-footer">Belum punya akun? <a href="{% url 'store:register' %}">Daftar</a></p>
+    </div>
+  </div>
+</section>
+{% endblock %}

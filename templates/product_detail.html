@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<section class="product-detail-card">
+  {% if product.has_image %}
+    <div class="detail-thumb">
+      {% if product.image %}
+        <img src="{{ product.image.url }}" alt="{{ product.name }}">
+      {% elif product.image_url %}
+        {% if product.image_url|slice:":7" == "http://" or product.image_url|slice:":8" == "https://" or product.image_url|slice:":1" == "/" %}
+          <img src="{{ product.image_url }}" alt="{{ product.name }}">
+        {% else %}
+          <img src="{% static product.image_url %}" alt="{{ product.name }}">
+        {% endif %}
+      {% endif %}
+    </div>
+  {% endif %}
+  <div class="detail-meta">
+    <p class="eyebrow">Detail Produk</p>
+    <h2>{{ product.name }}</h2>
+    <p class="product-description">{{ product.description }}</p>
+    <div class="detail-pricing">
+      <span class="price">{{ product.price_idr }}</span>
+      <span class="stock">Stok: {{ product.stock }}</span>
+    </div>
+    <div class="button-row">
+      <a class="action-button" href="{% url 'store:add_to_cart' product.slug %}">Tambah ke Keranjang</a>
+      <a class="action-button secondary" href="{% url 'store:dashboard' %}">Kembali ke Dashboard</a>
+    </div>
+  </div>
+</section>
+
+<!-- Review Form Section -->
+<section class="product-reviews-section" style="max-width: 1200px; margin: 40px auto; padding: 0 20px;">
+  <div class="reviews-container" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 30px;">
+    
+    <div style="margin-bottom: 30px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-start; gap: 20px;">
+      <div>
+        <h3 class="reviews-title" style="margin: 0 0 6px 0; font-size: 1.5rem; font-weight: 700; color: #f3f4f6;">Ulasan Pelanggan</h3>
+        <p class="reviews-subtitle" style="margin: 0; color: #9ca3af; font-size: 0.95rem;">Bagikan opini Anda atau lihat apa yang dikatakan pembeli lain tentang produk ini</p>
+      </div>
+    </div>
+
+    <!-- Review Form -->
+    {% if has_purchased %}
+      <div class="write-review-card" style="background: rgba(59, 130, 246, 0.03); border: 1px solid rgba(59, 130, 246, 0.15); border-radius: 12px; padding: 24px; margin-bottom: 40px;">
+        <h4 style="margin: 0 0 8px 0; font-size: 1.1rem; color: #60a5fa; font-weight: 600;">
+          {% if existing_user_review %}Ubah Ulasan Anda{% else %}Tulis Ulasan Produk{% endif %}
+        </h4>
+        <p style="margin: 0 0 20px 0; font-size: 0.9rem; color: #9ca3af;">Anda telah membeli produk ini. Berikan rating dan ulasan Anda untuk membantu pembeli lain.</p>
+        
+        <form method="post" style="display: flex; flex-direction: column; gap: 16px;">
+          {% csrf_token %}
+          <div class="form-group">
+            <label style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 0.95rem; color: #e5e7eb;">Rating (1-5 Bintang)</label>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <select name="rating" required style="padding: 10px; border-radius: 8px; background: #111827; color: #f3f4f6; border: 1px solid rgba(255,255,255,0.15); font-size: 0.95rem; outline: none; cursor: pointer;">
+                <option value="5" {% if existing_user_review.rating == 5 %}selected{% endif %}>★★★★★ (5)</option>
+                <option value="4" {% if existing_user_review.rating == 4 %}selected{% endif %}>★★★★☆ (4)</option>
+                <option value="3" {% if existing_user_review.rating == 3 %}selected{% endif %}>★★★☆☆ (3)</option>
+                <option value="2" {% if existing_user_review.rating == 2 %}selected{% endif %}>★★☆☆☆ (2)</option>
+                <option value="1" {% if existing_user_review.rating == 1 %}selected{% endif %}>★☆☆☆☆ (1)</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="comment" style="display: block; margin-bottom: 8px; font-weight: 500; font-size: 0.95rem; color: #e5e7eb;">Komentar / Ulasan</label>
+            <textarea id="comment" name="comment" rows="4" placeholder="Bagikan pengalaman Anda menggunakan produk ini..." required style="width: 100%; padding: 12px; border-radius: 8px; background: #111827; color: #f3f4f6; border: 1px solid rgba(255,255,255,0.15); font-size: 0.95rem; outline: none; resize: vertical;">{{ existing_user_review.comment|default:"" }}</textarea>
+          </div>
+          <button type="submit" class="primary-button" style="padding: 12px 24px; border-radius: 8px; background: #3b82f6; color: white; border: none; font-size: 0.95rem; font-weight: 600; cursor: pointer; align-self: flex-start;">Kirim Ulasan</button>
+        </form>
+      </div>
+    {% elif request.user.is_authenticated %}
+      <div style="background: rgba(255, 255, 255, 0.02); border: 1px dashed rgba(255, 255, 255, 0.15); border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 40px; color: #9ca3af; font-size: 0.95rem;">
+        <svg style="margin: 0 auto 10px auto; color: #9ca3af; display: block;" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+        Hanya pembeli yang telah menerima produk ini yang dapat memberikan ulasan.
+      </div>
+    {% else %}
+      <div style="background: rgba(255, 255, 255, 0.02); border: 1px dashed rgba(255, 255, 255, 0.15); border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 40px; color: #9ca3af; font-size: 0.95rem;">
+        Silakan <a href="{% url 'store:login' %}?next={{ request.path }}" style="color: #60a5fa; text-decoration: underline; font-weight: 500;">login</a> terlebih dahulu untuk memberikan ulasan.
+      </div>
+    {% endif %}
+
+    <!-- Reviews Grid List -->
+    {% if reviews %}
+      <div class="reviews-grid" style="display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+        {% for review in reviews %}
+          <article class="review-item" style="background: rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.05); border-radius: 10px; padding: 20px; display: flex; flex-direction: column; gap: 12px;">
+            <div class="review-header" style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px;">
+              <div class="reviewer-info">
+                <h4 class="reviewer-name" style="margin: 0; font-size: 1rem; font-weight: 600; color: #f3f4f6;">{{ review.user.first_name|default:review.user.username }}</h4>
+                <p class="review-date" style="margin: 4px 0 0 0; font-size: 0.8rem; color: #9ca3af;">{{ review.created_at|date:"d M Y" }}</p>
+              </div>
+              <div class="review-rating">
+                <span class="rating-badge" style="background: rgba(245,158,11,0.1); color: #fbbf24; border: 1px solid rgba(245,158,11,0.2); font-size: 0.8rem; padding: 2px 8px; border-radius: 4px; font-weight: 600;">{{ review.rating }}/5</span>
+              </div>
+            </div>
+            
+            <div class="review-stars" style="color: #fbbf24; font-size: 0.9rem; letter-spacing: 2px;">
+              {% for star in "12345" %}
+                {% if forloop.counter <= review.rating %}
+                  ★
+                {% else %}
+                  ☆
+                {% endif %}
+              {% endfor %}
+            </div>
+            
+            <p class="review-comment" style="margin: 0; font-size: 0.95rem; line-height: 1.5; color: #d1d5db;">{{ review.comment }}</p>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p style="color: #9ca3af; text-align: center; margin: 20px 0;">Belum ada ulasan untuk produk ini.</p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

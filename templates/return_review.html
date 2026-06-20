@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="checkout-page">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Review Retur</p>
+      <h2>Daftar Permintaan Retur</h2>
+      <p class="text-muted">Sebagai admin, Anda dapat mengubah status retur menjadi pending, approved, atau rejected.</p>
+    </div>
+  </div>
+
+  <div class="review-grid">
+    {% if return_requests %}
+      {% for req in return_requests %}
+        <article class="review-card">
+          <div class="review-card-header">
+            <div>
+              <p class="eyebrow">Retur #{{ req.id }}</p>
+              <h3>Order #{{ req.order.id }}</h3>
+            </div>
+            <div class="review-badge status-{{ req.status }}">{{ req.get_status_display }}</div>
+          </div>
+
+          <div class="review-details">
+            <div>
+              <strong>User</strong>
+              <p>{{ req.user.username }}</p>
+            </div>
+            <div>
+              <strong>Diajukan</strong>
+              <p>{{ req.created_at|date:'d M Y H:i' }}</p>
+            </div>
+            <div>
+              <strong>Disetujui Syarat</strong>
+              <p>{% if req.accepted_terms %}Ya{% else %}Tidak{% endif %}</p>
+            </div>
+          </div>
+
+          <div class="review-description">
+            <strong>Alasan Retur</strong>
+            <p>{{ req.reason }}</p>
+          </div>
+
+          <div class="button-row review-actions">
+            <form method="post" action="{% url 'store:return_review_action' req.id %}">
+              {% csrf_token %}
+              <button type="submit" name="action" value="pending" class="action-button secondary">Pending</button>
+              <button type="submit" name="action" value="approved" class="primary-button">Approve</button>
+              <button type="submit" name="action" value="rejected" class="action-button">Reject</button>
+            </form>
+          </div>
+        </article>
+      {% endfor %}
+    {% else %}
+      <div class="review-card empty-state">
+        <h3>Tidak ada permintaan retur</h3>
+        <p>Semua permintaan retur sudah ditangani atau belum ada retur baru yang masuk.</p>
+      </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

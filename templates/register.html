@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="auth-panel">
+  <div class="auth-card">
+    <div class="auth-header">
+      <p class="eyebrow">Daftar</p>
+      <h2>Buat akun baru</h2>
+      <p>Lengkapi data Anda dengan email, nomor telepon, dan alamat untuk proses pengiriman pesanan yang lebih cepat.</p>
+    </div>
+    <form method="post" class="auth-form">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+      {{ form.as_p }}
+      <button type="submit">Daftar</button>
+    </form>
+    <p class="auth-footer">Sudah punya akun? <a href="{% url 'store:login' %}">Login</a></p>
+  </div>
+</section>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const provinceSelect = document.getElementById('id_province');
+    const regencySelect = document.getElementById('id_regency');
+    if (!provinceSelect || !regencySelect) return;
+
+    let regencyMap = {};
+
+    function setRegencyOptions(values) {
+      const currentValue = regencySelect.value;
+      regencySelect.innerHTML = '';
+      const defaultOption = document.createElement('option');
+      defaultOption.value = '';
+      defaultOption.textContent = 'Pilih Kabupaten/Kota';
+      regencySelect.appendChild(defaultOption);
+
+      values.forEach(function (regency) {
+        const option = document.createElement('option');
+        option.value = regency;
+        option.textContent = regency;
+        if (regency === currentValue) {
+          option.selected = true;
+        }
+        regencySelect.appendChild(option);
+      });
+    }
+
+    function updateRegencies() {
+      const selectedProvince = provinceSelect.value;
+      if (selectedProvince && regencyMap[selectedProvince]) {
+        setRegencyOptions(regencyMap[selectedProvince]);
+      } else {
+        setRegencyOptions([]);
+      }
+    }
+
+    fetch('/static/data/indonesia_regions.json')
+      .then(function (response) {
+        if (!response.ok) {
+          throw new Error('Gagal memuat data wilayah');
+        }
+        return response.json();
+      })
+      .then(function (data) {
+        Object.values(data).forEach(function (provinceGroup) {
+          Object.entries(provinceGroup).forEach(function (entry) {
+            var provinceName = entry[0];
+            var regencies = entry[1];
+            regencyMap[provinceName] = regencies;
+          });
+        });
+        updateRegencies();
+      })
+      .catch(function (error) {
+        console.error(error);
+      });
+
+    provinceSelect.addEventListener('change', updateRegencies);
+  });
+</script>
+  </div>
+</section>
+{% endblock %}

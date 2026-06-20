@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Verity</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="app-header">
+        <div class="topbar">
+          <div class="brand">
+            <a href="/">Verity</a>
+            <span>Elegant E-Commerce</span>
+          </div>
+          <nav>
+            <div class="categories-dropdown">
+              <button class="categories-toggle" aria-expanded="false" aria-haspopup="true">Kategori ▾</button>
+              <div class="categories-menu" role="menu">
+                <a role="menuitem" href="{% url 'store:landing' %}" class="category-link highlight {% if not active_category %}active{% endif %}">All</a>
+                {% for c in categories %}
+                  <a role="menuitem" href="{% url 'store:category' c.slug %}" class="category-link {% if active_category and active_category.id == c.id %}active{% endif %}">{{ c.name }}</a>
+                {% endfor %}
+              </div>
+            </div>
+            {% if request.user.is_authenticated %}
+              {% if request.user.is_staff %}
+                <a class="nav-link" href="{% url 'store:return_review' %}">Review Retur</a>
+                <a class="nav-link" href="{% url 'store:order_management' %}">Kelola Pesanan</a>
+              {% endif %}
+              <a class="nav-link" href="{% url 'store:account' %}">Akun Saya</a>
+              <a class="nav-link" href="{% url 'store:dashboard' %}">Dashboard</a>
+              <a class="nav-link" href="{% url 'store:cart' %}">Cart ({{ cart_count }})</a>
+              <a class="nav-link" href="{% url 'store:logout' %}">Logout</a>
+              <span class="user-label">Halo, {{ request.user.username }}</span>
+            {% else %}
+              <a class="nav-link" href="{% url 'store:cart' %}">Cart ({{ cart_count }})</a>
+              <a class="nav-link" href="{% url 'store:login' %}">Login</a>
+            {% endif %}
+          </nav>
+        </div>
+      </header>
+
+      <main class="page-content">
+        <div class="page-inner">
+          {% block content %}{% endblock %}
+        </div>
+      </main>
+
+      <footer class="app-footer">
+        <p>© Verity</p>
+      </footer>
+    </div>
+    <script src="/static/js/main.js"></script>
+  </body>
+</html>

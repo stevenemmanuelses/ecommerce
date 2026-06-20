@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block content %}
+<section class="review-page">
+  <div class="page-header review-hero">
+    <div>
+      <p class="eyebrow">Review Pesanan</p>
+      <h2>Order #{{ order.id }}</h2>
+      <p class="text-muted">Berikan rating dan ulasan untuk setiap produk yang sudah Anda terima.</p>
+    </div>
+  </div>
+
+  <div class="review-container">
+    {% if error %}
+      <div class="notification error">{{ error }}</div>
+    {% endif %}
+    {% if review_message %}
+      <div class="notification success">{{ review_message }}</div>
+    {% endif %}
+
+    <div class="order-review-summary">
+      <div class="summary-item">
+        <span>Status</span>
+        <strong>{{ order.get_status_display }}</strong>
+      </div>
+      <div class="summary-item">
+        <span>Tanggal Pesanan</span>
+        <strong>{{ order.created_at|date:'d M Y H:i' }}</strong>
+      </div>
+    </div>
+
+    {% if order_items %}
+      <div class="review-grid">
+        {% for item in order_items %}
+          <article class="review-card">
+            <div class="review-card-header">
+              <div>
+                <h3>
+                  {% if item.product %}
+                    {{ item.product.name }}
+                  {% else %}
+                    Produk tidak tersedia
+                  {% endif %}
+                </h3>
+                <p class="item-subtitle">Qty: {{ item.quantity }} {% if item.price %}• Rp {{ item.price|intcomma }} / unit{% endif %}</p>
+              </div>
+              <span class="review-badge status-approved">Sudah Diterima</span>
+            </div>
+
+            <p class="review-item-description">
+              {% if item.product %}
+                {{ item.product.short_description }}
+              {% endif %}
+            </p>
+
+            <form method="post" class="review-form">
+              {% csrf_token %}
+              <input type="hidden" name="item_id" value="{{ item.id }}">
+
+              <div class="form-group">
+                <label for="rating-{{ item.id }}">Nilai Produk</label>
+                <select name="rating" id="rating-{{ item.id }}">
+                  <option value="">-- Pilih Rating --</option>
+                  {% for rating in rating_choices %}
+                    <option value="{{ rating }}" {% if item.review and item.review.rating == rating %}selected{% endif %}>{{ rating }} bintang</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="comment-{{ item.id }}">Komentar / Ulasan</label>
+                <textarea id="comment-{{ item.id }}" name="comment" rows="5" placeholder="Bagikan pengalaman Anda menggunakan produk ini">{% if item.review %}{{ item.review.comment }}{% endif %}</textarea>
+              </div>
+
+              {% if order.status == 'delivered' %}
+                <button type="submit" class="primary-button">Simpan Review</button>
+              {% else %}
+                <button type="submit" class="primary-button" disabled title="Order harus diterima terlebih dahulu">Simpan Review</button>
+              {% endif %}
+            </form>
+
+            {% if item.review %}
+              <div class="existing-review">
+                <h4>Review Anda</h4>
+                <div class="review-summary">
+                  <span class="review-score">{{ item.review.rating }} / 5</span>
+                  <p>{{ item.review.comment }}</p>
+                </div>
+              </div>
+            {% endif %}
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="review-empty-state">
+        <p class="text-muted">Belum ada produk yang dapat direview. Silahkan periksa kembali order Anda atau hubungi customer service.</p>
+      </div>
+    {% endif %}
+
+    <div class="actions-row">
+      <a class="secondary-button" href="{% url 'store:order_tracking' order.id %}">Kembali ke Order</a>
+      <a class="primary-button" href="{% url 'store:account' %}">Kembali ke Akun Saya</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,1 @@
+# This file is deprecated. Midtrans integration has been removed in favor of manual payment proof upload.

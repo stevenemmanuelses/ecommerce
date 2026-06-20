@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="checkout-page">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Permintaan Retur</p>
+      <h2>Ajukan pengembalian barang</h2>
+      <p class="text-muted">Pastikan Anda setuju dengan syarat dan ketentuan retur sebelum mengirim permintaan.</p>
+    </div>
+  </div>
+  <div class="checkout-grid">
+    <div class="checkout-form-card">
+      {% if error %}
+        <div class="notification error">{{ error }}</div>
+      {% endif %}
+      {% if success %}
+        <div class="notification success">{{ success }}</div>
+        <div class="summary-note">Permintaan retur telah dikirim. Tim kami akan meninjau permintaan Anda dalam waktu 1-2 hari kerja.</div>
+      {% elif return_request %}
+        <div class="summary-header">
+          <p class="eyebrow">Status Retur</p>
+          <h3>Permintaan sudah diajukan</h3>
+        </div>
+        <div class="notification success" style="background: rgba(251, 191, 36, 0.12); color: #78350f; border-color: rgba(251, 191, 36, 0.25);">
+          Status saat ini: <strong>{{ return_request.get_status_display }}</strong>
+        </div>
+        <div class="return-terms">
+          <h4>Detail Pengajuan</h4>
+          <ul>
+            <li>Nomor pesanan: <strong>#{{ order.id }}</strong></li>
+            <li>Status: <strong>{{ return_request.get_status_display }}</strong></li>
+            <li>Alasan retur: {{ return_request.reason }}</li>
+            <li>Diajukan pada: {{ return_request.created_at|date:'d M Y H:i' }}</li>
+          </ul>
+        </div>
+        <div class="summary-note">Silakan tunggu review dari admin. Jika ditolak, Anda dapat menghubungi layanan pelanggan untuk informasi lebih lanjut.</div>
+      {% else %}
+        <div class="summary-header">
+          <p class="eyebrow">Detail Retur</p>
+          <h3>Nomor pesanan #{{ order.id }}</h3>
+        </div>
+        <div class="return-terms">
+          <h4>Syarat Retur</h4>
+          <ul>
+            <li>Retur hanya berlaku untuk pesanan yang sudah dibayar.</li>
+            <li>Produk harus dikembalikan dalam kondisi baik, belum dipakai, dan tidak rusak.</li>
+            <li>Permintaan diajukan maksimal 7 hari setelah pesanan diterima.</li>
+            <li>Isi alasan retur dengan jelas agar proses lebih cepat.</li>
+            <li>Tim layanan pelanggan akan meninjau dan mengonfirmasi status retur.</li>
+          </ul>
+        </div>
+        <form method="post" class="checkout-form">
+          {% csrf_token %}
+          <div class="form-group">
+            <label for="reason">Alasan Retur</label>
+            <textarea id="reason" name="reason" rows="5" placeholder="Jelaskan alasan Anda ingin mengembalikan produk" required>{{ reason }}</textarea>
+          </div>
+          <div class="form-group checkbox-group">
+            <label class="checkbox-label">
+              <input type="checkbox" name="agree_terms" required>
+              Saya setuju dengan syarat dan ketentuan retur.
+            </label>
+          </div>
+          <div class="button-row" style="margin-top: 4px;">
+            <button type="submit" class="primary-button">Kirim Permintaan Retur</button>
+            <a class="secondary-button" href="{% url 'store:dashboard' %}">Kembali ke Dashboard</a>
+          </div>
+        </form>
+      {% endif %}
+    </div>
+
+    <div class="order-summary-card">
+      <div class="summary-header">
+        <p class="eyebrow">Ringkasan Retur</p>
+        <h3>Proses Cepat dan Mudah</h3>
+      </div>
+      <div class="summary-note">
+        <p>Setelah permintaan dikirim, tim kami akan memeriksa kondisi retur dan menghubungi Anda melalui email.</p>
+        <p>Pastikan pesanan sudah dibayar dan alasan retur jelas agar proses dapat berjalan lancar.</p>
+      </div>
+      <div class="summary-totals">
+        <div class="summary-line">
+          <span>Status</span>
+          <strong>{% if return_request %}{{ return_request.get_status_display }}{% else %}Pending Review{% endif %}</strong>
+        </div>
+        <div class="summary-line">
+          <span>Estimasi Tanggapan</span>
+          <strong>1-2 hari kerja</strong>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

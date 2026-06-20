@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block content %}
+<section class="cart-page">
+  <div class="cart-header">
+    <p class="eyebrow">Checkout Berhasil</p>
+    <h2>Pesanan Anda Telah Dikonfirmasi</h2>
+  </div>
+  <div class="product-card" style="padding: 32px;">
+    <p>Terima kasih! Pesanan Anda sudah dibuat.</p>
+    <p>Nomor pesanan: <strong>#{{ order.id }}</strong></p>
+    <p>Kode unik: <strong>{{ unique_code }}</strong></p>
+    <p>Total pembayaran: <strong>Rp {{ total|intcomma }}</strong></p>
+    <p style="margin-top: 12px; color: #94a3b8;">Silakan klik tombol "Ajukan Retur" untuk mencoba fitur retur setelah checkout.</p>
+    <div style="margin-top: 24px; display: flex; gap: 12px; flex-wrap: wrap;">
+      <a class="primary-button" href="{% url 'store:dashboard' %}">Lanjutkan Belanja</a>
+      <a class="action-button secondary" href="{% url 'store:landing' %}">Kembali ke Halaman Utama</a>
+      <a class="action-button" href="{% url 'store:order_tracking' order.id %}">Lacak Pesanan</a>
+      <a class="action-button" href="{% url 'store:return_request' order.id %}">Ajukan Retur</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

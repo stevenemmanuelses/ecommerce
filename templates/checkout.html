@@ -1,0 +1,286 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+{% block content %}
+<section class="checkout-page">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Checkout</p>
+      <h2>Ringkasan Pesanan</h2>
+      <p class="text-muted">Periksa kembali pesanan Anda, lalu lanjutkan ke halaman pembayaran Midtrans.</p>
+    </div>
+  </div>
+
+  <div class="checkout-grid">
+    <div class="order-summary-card">
+      <div class="summary-header">
+        <p class="eyebrow">Ringkasan Pesanan</p>
+        <h3>{{ cart_items|length }} Produk</h3>
+      </div>
+      {% if stock_warnings %}
+        <div class="notification error">
+          <p>Ada beberapa produk dengan stok tidak mencukupi:</p>
+          <ul>
+            {% for warning in stock_warnings %}
+              <li>{{ warning.message }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+      <div class="summary-items">
+        {% for item in cart_items %}
+          <article class="order-item">
+            <div class="item-thumb">
+              {% if item.product.image %}
+                <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}">
+              {% elif item.product.image_url %}
+                {% if item.product.image_url|slice:":7" == "http://" or item.product.image_url|slice:":8" == "https://" or item.product.image_url|slice:":1" == "/" %}
+                  <img src="{{ item.product.image_url }}" alt="{{ item.product.name }}">
+                {% else %}
+                  <img src="{% static item.product.image_url %}" alt="{{ item.product.name }}">
+                {% endif %}
+              {% endif %}
+            </div>
+            <div class="item-meta">
+              <strong>{{ item.product.name }}</strong>
+              <span>{{ item.quantity }} x Rp {{ item.product.price|floatformat:0|intcomma }}</span>
+            </div>
+            <div class="item-total">Rp {{ item.total_price|floatformat:0|intcomma }}</div>
+          </article>
+        {% endfor %}
+      </div>
+
+      <div class="summary-totals">
+        <div class="summary-line">
+          <span>Subtotal</span>
+          <span>Rp {{ cart_total|intcomma }}</span>
+        </div>
+        <div class="summary-line">
+          <span>Kurir Terpilih</span>
+          <span id="courier-summary-display" style="font-weight: 600; color: #f3f4f6;">{{ selected_courier|upper }}</span>
+        </div>
+        <div class="summary-line">
+          <span>Biaya Kirim</span>
+          <span id="shipping-cost-display" style="font-weight: 600; color: #f3f4f6;">Rp {{ shipping_cost|intcomma }}</span>
+        </div>
+        {% if unique_code is not None %}
+          <div class="summary-line">
+            <span>Kode Unik</span>
+            <span>{{ unique_code|default:"000" }}</span>
+          </div>
+          <div class="summary-line total">
+            <span>Total Tagihan</span>
+            <span id="total-price-display" style="color: #60a5fa; font-weight: 700;">Rp {{ estimated_total_with_code|intcomma }}</span>
+          </div>
+        {% else %}
+          <div class="summary-line total">
+            <span>Total</span>
+            <span id="total-price-display" style="color: #60a5fa; font-weight: 700;">Rp {{ order_total|intcomma }}</span>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Courier and Payment Method Selection -->
+      <div class="checkout-options-section" style="margin-top: 24px; display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); margin-bottom: 24px;">
+        <div class="selection-card" style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);">
+          <div class="summary-header" style="margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 8px;">
+            <p class="eyebrow" style="margin:0;">Layanan Pengiriman</p>
+            <h3 style="margin: 4px 0 0 0; font-size: 1.1rem; color: #f3f4f6;">Pilih Kurir</h3>
+          </div>
+          <select id="courier-select" style="width: 100%; padding: 12px; border-radius: 8px; background: #111827; color: #f3f4f6; border: 1px solid rgba(255,255,255,0.15); font-size: 0.95rem; cursor: pointer; outline: none;">
+            {% for code, name in couriers %}
+              <option value="{{ code }}" {% if code == selected_courier %}selected{% endif %}>{{ name }}</option>
+            {% endfor %}
+          </select>
+          <p class="summary-note" style="margin-top: 8px; font-size: 0.8rem; color: #9ca3af;">Tarif POS lebih hemat Rp 2.000, TIKI bertambah Rp 1.500.</p>
+        </div>
+
+        <div class="selection-card" style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);">
+          <div class="summary-header" style="margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 8px;">
+            <p class="eyebrow" style="margin:0;">Metode Pembayaran</p>
+            <h3 style="margin: 4px 0 0 0; font-size: 1.1rem; color: #f3f4f6;">Pilih Jenis</h3>
+          </div>
+          <select id="payment-method-select" style="width: 100%; padding: 12px; border-radius: 8px; background: #111827; color: #f3f4f6; border: 1px solid rgba(255,255,255,0.15); font-size: 0.95rem; cursor: pointer; outline: none;">
+            {% for code, name in payment_methods %}
+              <option value="{{ code }}" {% if code == selected_payment_method %}selected{% endif %}>{{ name }}</option>
+            {% endfor %}
+          </select>
+          <p class="summary-note" style="margin-top: 8px; font-size: 0.8rem; color: #9ca3af;">Pembayaran diproses dengan aman via Midtrans.</p>
+        </div>
+      </div>
+
+      <div class="checkout-address-section">
+        <div class="summary-header">
+          <p class="eyebrow">Alamat Pengiriman</p>
+          <h3>Perbarui alamat sebelum bayar</h3>
+        </div>
+        <form method="post" class="checkout-form">
+          {% csrf_token %}
+          {% if form_saved %}
+            <p class="success-message">Alamat berhasil disimpan. Ongkir sudah diperbarui.</p>
+          {% endif %}
+          <div>
+            {{ form.phone_number.label_tag }}
+            {{ form.phone_number }}
+          </div>
+          <div>
+            {{ form.address_line.label_tag }}
+            {{ form.address_line }}
+          </div>
+          <div>
+            {{ form.province.label_tag }}
+            {{ form.province }}
+          </div>
+          <div>
+            {{ form.regency.label_tag }}
+            {{ form.regency }}
+          </div>
+          <div>
+            {{ form.postal_code.label_tag }}
+            {{ form.postal_code }}
+          </div>
+          <button type="submit" class="primary-button">Simpan Alamat</button>
+        </form>
+      </div>
+
+      <div class="payment-method-section">
+        <div class="summary-header">
+          <p class="eyebrow">Pembayaran</p>
+          <h3>Lanjutkan ke Pembayaran</h3>
+        </div>
+        <form method="post" action="{% url 'store:payment' %}" class="payment-method-form">
+          {% csrf_token %}
+          <input type="hidden" name="courier" id="hidden-courier" value="{{ selected_courier }}">
+          <input type="hidden" name="payment_method" id="hidden-payment-method" value="{{ selected_payment_method }}">
+          <p class="summary-note">Klik tombol di bawah untuk membuat pesanan dan melanjutkan ke halaman unggah bukti transfer.</p>
+          <button type="submit" class="primary-button">Buat Pesanan & Bayar</button>
+        </form>
+      </div>
+
+      <p class="summary-note">Setelah menekan tombol di atas, Anda akan langsung diarahkan ke halaman transfer bank dan upload bukti pembayaran manual.</p>
+      {% if stock_warnings %}
+        <a class="secondary-button" href="{% url 'store:cart' %}">Perbarui Keranjang</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const provinceSelect = document.getElementById('id_province');
+      const regencySelect = document.getElementById('id_regency');
+      if (!provinceSelect || !regencySelect) return;
+
+      let regencyMap = {};
+
+      function setRegencyOptions(values) {
+        const currentValue = regencySelect.value;
+        regencySelect.innerHTML = '';
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = 'Pilih Kabupaten/Kota';
+        regencySelect.appendChild(defaultOption);
+
+        values.forEach(function (regency) {
+          const option = document.createElement('option');
+          option.value = regency;
+          option.textContent = regency;
+          if (regency === currentValue) {
+            option.selected = true;
+          }
+          regencySelect.appendChild(option);
+        });
+      }
+
+      function updateRegencies() {
+        const selectedProvince = provinceSelect.value;
+        if (selectedProvince && regencyMap[selectedProvince]) {
+          setRegencyOptions(regencyMap[selectedProvince]);
+        } else {
+          setRegencyOptions([]);
+        }
+      }
+
+      fetch('/static/data/indonesia_regions.json')
+        .then(function (response) {
+          if (!response.ok) {
+            throw new Error('Gagal memuat data wilayah');
+          }
+          return response.json();
+        })
+        .then(function (data) {
+          Object.values(data).forEach(function (provinceGroup) {
+            Object.entries(provinceGroup).forEach(function (entry) {
+              var provinceName = entry[0];
+              var regencies = entry[1];
+              regencyMap[provinceName] = regencies;
+            });
+          });
+          updateRegencies();
+        })
+        .catch(function (error) {
+          console.error(error);
+        });
+
+      provinceSelect.addEventListener('change', updateRegencies);
+
+      // Courier and Payment calculations
+      const initialCourier = "{{ selected_courier }}";
+      const initialShippingCost = parseInt("{{ shipping_cost }}") || 0;
+      let baseShipping = initialShippingCost;
+      if (initialCourier === 'pos') {
+        baseShipping = initialShippingCost + 2000;
+      } else if (initialCourier === 'tiki') {
+        baseShipping = initialShippingCost - 1500;
+      }
+
+      const subtotal = parseInt("{{ cart_total }}") || 0;
+      const uniqueCode = parseInt("{{ unique_code|default:0 }}") || 0;
+      
+      const courierSelect = document.getElementById('courier-select');
+      const paymentMethodSelect = document.getElementById('payment-method-select');
+      const hiddenCourier = document.getElementById('hidden-courier');
+      const hiddenPaymentMethod = document.getElementById('hidden-payment-method');
+      const courierSummaryDisplay = document.getElementById('courier-summary-display');
+      const shippingCostDisplay = document.getElementById('shipping-cost-display');
+      const totalPriceDisplay = document.getElementById('total-price-display');
+
+      function formatRupiah(num) {
+        return 'Rp ' + num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+      }
+
+      function updateShippingAndTotal() {
+        const selectedCourier = courierSelect.value;
+        hiddenCourier.value = selectedCourier;
+        if (courierSummaryDisplay) {
+          courierSummaryDisplay.textContent = selectedCourier.toUpperCase();
+        }
+
+        let currentShipping = baseShipping;
+        if (selectedCourier === 'pos') {
+          currentShipping = Math.max(8000, baseShipping - 2000);
+        } else if (selectedCourier === 'tiki') {
+          currentShipping = baseShipping + 1500;
+        }
+
+        if (shippingCostDisplay) {
+          shippingCostDisplay.textContent = formatRupiah(currentShipping);
+        }
+
+        const finalTotal = subtotal + currentShipping + uniqueCode;
+        if (totalPriceDisplay) {
+          totalPriceDisplay.textContent = formatRupiah(finalTotal);
+        }
+      }
+
+      if (courierSelect) {
+        courierSelect.addEventListener('change', updateShippingAndTotal);
+      }
+      if (paymentMethodSelect) {
+        paymentMethodSelect.addEventListener('change', function() {
+          hiddenPaymentMethod.value = paymentMethodSelect.value;
+        });
+      }
+    });
+  </script>
+</section>
+{% endblock %}

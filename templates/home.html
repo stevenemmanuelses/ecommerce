@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<section class="dashboard-hero">
+  <div class="hero-copy">
+    <p class="eyebrow">Dashboard</p>
+    <h2>Verity</h2>
+    <p>Elegance in Every Scent</p>
+  </div>
+  <div class="hero-stats">
+    <article class="stat-card">
+      <div class="stat-card-top">
+        <h3 class="stat-value">{{ products|length }}</h3>
+        <p class="stat-label">Produk Aktif</p>
+      </div>
+      <p class="stat-description">last all day.</p>
+    </article>
+  </div>
+</section>
+
+<section class="products-panel">
+  <div class="section-header">
+    <div>
+      <p class="eyebrow">Katalog Barang</p>
+      <h3>Daftar Produk</h3>
+    </div>
+    <div>
+      <p>Parfum dengan kualitas terbaik.</p>
+      {% if request.user.is_staff %}
+        <a class="primary-button" href="{% url 'store:product_create' %}">Tambah Produk</a>
+      {% endif %}
+    </div>
+  </div>
+  <div class="product-row">
+    {% for p in products %}
+      <article class="product-card">
+        <div class="product-thumb">
+          {% if p.image %}
+            <img src="{{ p.image.url }}" alt="{{ p.name }}" loading="lazy">
+          {% elif p.image_url %}
+            {% if p.image_url|slice:":7" == "http://" or p.image_url|slice:":8" == "https://" or p.image_url|slice:":1" == "/" %}
+              <img src="{{ p.image_url }}" alt="{{ p.name }}" loading="lazy">
+            {% else %}
+              <img src="{% static p.image_url %}" alt="{{ p.name }}" loading="lazy">
+            {% endif %}
+          {% else %}
+            <div class="thumb-placeholder">Foto produk</div>
+          {% endif %}
+        </div>
+        <div class="product-meta">
+          <a href="{% url 'store:product_detail' p.slug %}">{{ p.name }}</a>
+          <p class="product-description">{{ p.short_description }}</p>
+          <div class="product-bottom">
+            <span class="price">{{ p.price_idr }}</span>
+            <div class="button-row">
+              <a class="action-button" href="{% url 'store:product_detail' p.slug %}">Lihat Detail</a>
+              <a class="action-button secondary" href="{% url 'store:add_to_cart' p.slug %}">Tambah ke Keranjang</a>
+              {% if request.user.is_staff %}
+                <a class="action-button secondary" href="{% url 'store:product_edit' p.slug %}">Edit Produk</a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </article>
+    {% empty %}
+      <p>Tidak ada produk tersedia saat ini.</p>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

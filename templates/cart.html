@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+{% block content %}
+<section class="cart-page">
+  <div class="cart-header">
+    <p class="eyebrow">Keranjang Belanja</p>
+    <h2>Barang di keranjang Anda</h2>
+  </div>
+  {% if cart_items %}
+    <div class="cart-list">
+      {% for item in cart_items %}
+        <article class="cart-item">
+          <div class="cart-thumb">
+            {% if item.product.image %}
+              <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}">
+            {% elif item.product.image_url %}
+              {% if item.product.image_url|slice:":7" == "http://" or item.product.image_url|slice:":8" == "https://" or item.product.image_url|slice:":1" == "/" %}
+                <img src="{{ item.product.image_url }}" alt="{{ item.product.name }}">
+              {% else %}
+                <img src="{% static item.product.image_url %}" alt="{{ item.product.name }}">
+              {% endif %}
+            {% endif %}
+          </div>
+          <div class="cart-details">
+            <a href="{% url 'store:product_detail' item.product.slug %}">{{ item.product.name }}</a>
+            <p>{{ item.product.short_description }}</p>
+            <div class="cart-meta">
+              <form method="post" action="{% url 'store:update_cart' %}">
+                {% csrf_token %}
+                <input type="hidden" name="item_id" value="{{ item.id }}">
+                <label>Jumlah</label>
+                <input class="quantity-input" type="number" name="quantity" value="{{ item.quantity }}" min="1">
+                <button type="submit" class="action-button small">Update</button>
+              </form>
+              <span class="price">{{ item.product.price_idr }} x {{ item.quantity }}</span>
+            </div>
+            <a class="remove-link" href="{% url 'store:remove_from_cart' item.id %}">Hapus</a>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+    <div class="cart-summary">
+      <div>
+        <p>Total</p>
+        <h3>Rp {{ cart_total|intcomma }}</h3>
+      </div>
+      <div class="checkout-actions">
+        <a class="primary-button" href="{% url 'store:checkout' %}">Checkout</a>
+        <a class="primary-button secondary" href="{% url 'store:dashboard' %}">Lanjutkan Belanja</a>
+      </div>
+    </div>
+  {% else %}
+    <p class="empty-cart">Keranjang Anda masih kosong.</p>
+    <a class="primary-button" href="{% url 'store:landing' %}">Lihat Produk</a>
+  {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<section class="landing-hero">
+  <div class="landing-copy">
+    <p class="eyebrow">Discover the new signature</p>
+    <h1>Selamat datang di Verity</h1>
+    <p>Jelajahi koleksi parfum kami dan temukan aroma terbaik sebelum masuk ke dashboard admin.</p>
+    <div class="landing-actions">
+      <a class="primary-button" href="{% url 'store:login' %}">
+        <span class="icon">👤</span> Login
+      </a>
+      <a class="secondary-button" href="{% url 'store:register' %}">Daftar</a>
+    </div>
+  </div>
+  <div class="landing-preview">
+    <div class="preview-card">
+      <p class="eyebrow">Katalog Publik</p>
+      <h2>Produk Terbaru</h2>
+      <p>Lihat parfum unggulan kami yang bisa dilihat semua pengunjung tanpa harus masuk terlebih dahulu.</p>
+    </div>
+  </div>
+</section>
+
+<section class="products-panel">
+  <div class="section-header">
+    <div>
+      <p class="eyebrow">Katalog Produk</p>
+      <h3>Verity Parfum</h3>
+    </div>
+    <p>Parfum dengan kualitas terbaik.</p>
+  </div>
+  <div class="product-row">
+    {% for p in products %}
+      <article class="product-card">
+        <div class="product-thumb">
+          {% if p.image %}
+            <img src="{{ p.image.url }}" alt="{{ p.name }}" loading="lazy">
+          {% elif p.image_url %}
+            {% if p.image_url|slice:":7" == "http://" or p.image_url|slice:":8" == "https://" or p.image_url|slice:":1" == "/" %}
+              <img src="{{ p.image_url }}" alt="{{ p.name }}" loading="lazy">
+            {% else %}
+              <img src="{% static p.image_url %}" alt="{{ p.name }}" loading="lazy">
+            {% endif %}
+          {% else %}
+            <div class="thumb-placeholder">Foto produk</div>
+          {% endif %}
+        </div>
+        <div class="product-meta">
+          <a href="{% url 'store:product_detail' p.slug %}">{{ p.name }}</a>
+          <p class="product-description">{{ p.short_description }}</p>
+          <div class="product-bottom">
+            <span class="price">{{ p.price_idr }}</span>
+            <div class="button-row">
+              <a class="action-button" href="{% url 'store:product_detail' p.slug %}">Lihat Detail</a>
+              <a class="action-button secondary" href="{% url 'store:add_to_cart' p.slug %}">Tambah ke Keranjang</a>
+            </div>
+          </div>
+        </div>
+      </article>
+    {% empty %}
+      <p>Tidak ada produk tersedia saat ini.</p>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

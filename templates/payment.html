@@ -1,0 +1,379 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+{% block content %}
+<section class="payment-page">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Pembayaran</p>
+      <h2>Lanjutkan ke Pembayaran</h2>
+      <p class="text-muted">Tombol di bawah akan membuka popup Midtrans untuk menyelesaikan transaksi Anda.</p>
+    </div>
+  </div>
+
+  <div class="checkout-grid">
+    <div class="payment-card">
+      <div class="summary-header">
+        <p class="eyebrow">Detail Pembayaran</p>
+        <h3>{{ payment_method }}</h3>
+      </div>
+      {% if stock_warnings %}
+        <div class="notification error">
+          <p>Beberapa produk di keranjang Anda memiliki jumlah melebihi stok:</p>
+          <ul>
+            {% for warning in stock_warnings %}
+              <li>{{ warning.message }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+      <div class="payment-method-panel">
+        <div class="method-icon">{{ payment_method_key|upper }}</div>
+        <div>
+          <p class="payment-title">{{ payment_info.headline }}</p>
+          <p class="payment-subtitle">{{ payment_info.description }}</p>
+        </div>
+      </div>
+      {% if snap_error %}
+        <div class="notification error">
+          {{ snap_error }}
+        </div>
+      {% endif %}
+      <div class="payment-info-grid">
+              <div>
+                <span>ID Invoice</span>
+                <strong style="display: flex; align-items: center; gap: 8px;">
+                  <span id="midtrans-code-text">{{ midtrans_code }}</span>
+                  <button type="button" class="copy-small-btn" data-copy-target="midtrans-code-text" title="Salin ID Invoice">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  </button>
+                </strong>
+              </div>
+              <div>
+                <span>Metode</span>
+                <strong>{{ payment_method }}</strong>
+              </div>
+              <div>
+                <span>Kurir</span>
+                <strong style="text-transform: uppercase;">{{ request.session.selected_courier }}</strong>
+              </div>
+              <div>
+                <span>Subtotal Awal</span>
+                <strong>Rp {{ cart_total|intcomma }}</strong>
+              </div>
+              <div>
+                <span>Store Points Tersedia</span>
+                <strong>{{ available_points|default:0 }}</strong>
+              </div>
+              <div>
+                <span>Poin Digunakan</span>
+                <strong>{{ points_to_use|default:0 }}</strong>
+              </div>
+              <div>
+                <span>Potongan Poin</span>
+                <strong>- Rp {{ points_discount|intcomma }}</strong>
+              </div>
+              <div>
+                <span>Biaya Kirim</span>
+                <strong>Rp {{ shipping_cost|intcomma }}</strong>
+              </div>
+              <div>
+                <span>Total setelah Poin</span>
+                <strong>Rp {{ order_total|intcomma }}</strong>
+              </div>
+              <div>
+                <span>Kode Unik</span>
+                <strong style="display: flex; align-items: center; gap: 8px;">
+                  <span id="unique-code-text">{{ unique_code }}</span>
+                  <button type="button" class="copy-small-btn" data-copy-target="unique-code-text" title="Salin Kode Unik">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  </button>
+                </strong>
+              </div>
+              <div>
+                <span>Total Tagihan</span>
+                <strong style="display: flex; align-items: center; gap: 8px; color: #60a5fa;">
+                  <span>Rp <span id="billing-total-val">{{ billing_total|intcomma }}</span></span>
+                  <span id="billing-total-raw" style="display:none;">{{ billing_total }}</span>
+                  <button type="button" class="copy-small-btn" data-copy-target="billing-total-raw" title="Salin Nominal Tagihan">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  </button>
+                </strong>
+              </div>
+            </div>
+            <div class="payment-detail-box">
+              <div class="detail-row">
+                <span>{{ payment_info.detail_label }}</span>
+                <strong>{{ payment_info.detail_value }}</strong>
+              </div>
+              <p class="payment-note">{{ payment_info.note }}</p>
+            </div>
+
+            {% if snap_token %}
+              <div class="midtrans-token-card">
+                <div class="midtrans-token-header">
+                  <div>
+                    <p class="eyebrow">Token Midtrans</p>
+                    <h3>Token siap dipakai</h3>
+                  </div>
+                  <span class="midtrans-badge">Midtrans</span>
+                </div>
+                <div class="midtrans-token-value-row">
+                  <code id="midtrans-token-value" class="midtrans-token-value">{{ snap_token }}</code>
+                  <button type="button" class="copy-token-button" data-copy-token="{{ snap_token|escape }}">Salin Token</button>
+                </div>
+                <div class="midtrans-token-links">
+                  {% if midtrans_redirect_url %}
+                    <div class="detail-row">
+                      <span>Redirect URL</span>
+                      <a href="{{ midtrans_redirect_url }}" target="_blank" rel="noopener noreferrer">Buka halaman pembayaran Midtrans</a>
+                    </div>
+                  {% endif %}
+                </div>
+                <div class="payment-note" style="margin-top: 12px; font-size: 0.9rem; line-height: 1.4;">
+                  <strong>Petunjuk Pembayaran:</strong>
+                  <ol style="margin: 6px 0 0 16px; padding: 0;">
+                    <li>Klik tombol <strong>Lanjutkan ke Pembayaran</strong> di bawah untuk membuka popup Midtrans.</li>
+                    <li>Ikuti instruksi pembayaran yang muncul di popup.</li>
+                    <li>Selesaikan transaksi sampai pembayaran berhasil.</li>
+                  </ol>
+                  <span id="midtrans-token-copy-status" style="display: block; margin-top: 8px; color: #60a5fa;">Gunakan token di atas untuk integrasi Snap.</span>
+                </div>
+              </div>
+            {% endif %}
+
+            
+
+            <form method="post" class="checkout-form" action="{% url 'store:payment' %}">
+              {% csrf_token %}
+              <input type="hidden" name="payment_method" value="{{ payment_method_key|default:'qris' }}">
+              <div class="form-group">
+                <label for="points_to_use">Gunakan Store Points (maks: {{ available_points|default:0 }})</label>
+                <input id="points_to_use" type="number" name="points_to_use" min="0" max="{{ available_points|default:0 }}" value="{{ points_to_use|default:0 }}">
+              </div>
+              {% if save_message %}
+                <div class="notification success">
+                  {{ save_message }}
+                </div>
+              {% endif %}
+              <div class="button-group">
+                <button type="submit" name="action" value="save_points" class="secondary-button">Simpan</button>
+              </div>
+            </form>
+
+            <div class="midtrans-launch-card">
+              <div class="midtrans-launch-header">
+                <div>
+                  <p class="eyebrow">Midtrans</p>
+                  <h3>Siap menyelesaikan pembayaran</h3>
+                </div>
+                <span class="midtrans-badge">Midtrans</span>
+              </div>
+              <p class="summary-note">Tekan tombol di bawah untuk membuka popup Midtrans dan menyelesaikan transaksi.</p>
+
+              <button type="button" id="midtrans-pay-button" class="primary-button" {% if not snap_token or stock_issue %}disabled style="opacity:0.6; cursor:not-allowed;"{% endif %}>Lanjutkan ke Pembayaran</button>
+            </div>
+
+            <form id="midtrans-result-form" method="post" action="{% url 'store:payment_finish' %}" style="display:none;">
+              {% csrf_token %}
+              <input type="hidden" name="result_json" id="midtrans-result-json">
+            </form>
+          </div>
+
+          <div class="order-summary-card">
+            <div class="summary-header">
+              <p class="eyebrow">Ringkasan Pesanan</p>
+              <h3>{{ cart_items|length }} Produk</h3>
+            </div>
+            <div class="summary-items">
+              {% for item in cart_items %}
+                <article class="order-item">
+                  <div class="item-thumb">
+                    {% if item.product.image %}
+                      <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}">
+                    {% elif item.product.image_url %}
+                      {% if item.product.image_url|slice:":7" == "http://" or item.product.image_url|slice:":8" == "https://" or item.product.image_url|slice:":1" == "/" %}
+                        <img src="{{ item.product.image_url }}" alt="{{ item.product.name }}">
+                      {% else %}
+                        <img src="{% static item.product.image_url %}" alt="{{ item.product.name }}">
+                      {% endif %}
+                    {% endif %}
+                  </div>
+                  <div class="item-meta">
+                    <strong>{{ item.product.name }}</strong>
+                    <span>{{ item.quantity }} x Rp {{ item.product.price|floatformat:0|intcomma }}</span>
+                  </div>
+                  <div class="item-total">Rp {{ item.total_price|floatformat:0|intcomma }}</div>
+                </article>
+              {% endfor %}
+            </div>
+            <div class="summary-totals">
+              <div class="summary-line">
+                <span>Subtotal</span>
+                <span>Rp {{ cart_total|intcomma }}</span>
+              </div>
+              <div class="summary-line">
+                <span>Potongan Poin</span>
+                <span>- Rp {{ points_discount|intcomma }}</span>
+              </div>
+              <div class="summary-line">
+                <span>Biaya Kirim</span>
+                <span>Rp {{ shipping_cost|intcomma }}</span>
+              </div>
+              <div class="summary-line total">
+                <span>Total setelah Poin</span>
+                <span>Rp {{ order_total|intcomma }}</span>
+              </div>
+              <div class="summary-line">
+                <span>Kode Unik</span>
+                <span>{{ unique_code }}</span>
+              </div>
+              <div class="summary-line total">
+                <span>Total Tagihan</span>
+                <span>Rp {{ billing_total|intcomma }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {% if snap_token %}
+          <script src="{{ snap_js_url }}" data-client-key="{{ midtrans_client_key }}"></script>
+          <script>
+            document.addEventListener('DOMContentLoaded', function () {
+              const payButton = document.getElementById('midtrans-pay-button');
+              const resultForm = document.getElementById('midtrans-result-form');
+              const resultInput = document.getElementById('midtrans-result-json');
+              const copyButton = document.querySelector('[data-copy-token]');
+              const tokenStatus = document.getElementById('midtrans-token-copy-status');
+
+              if (copyButton) {
+                copyButton.addEventListener('click', async function () {
+                  const token = copyButton.getAttribute('data-copy-token') || '';
+                  try {
+                    await navigator.clipboard.writeText(token);
+                    if (tokenStatus) {
+                      tokenStatus.textContent = 'Token Midtrans berhasil disalin.';
+                    }
+                  } catch (error) {
+                    if (tokenStatus) {
+                      tokenStatus.textContent = 'Gagal menyalin token. Salin manual dari kolom token di atas.';
+                    }
+                  }
+                });
+              }
+
+              // Clipboard copy handler for small copy buttons
+              const copySmallButtons = document.querySelectorAll('[data-copy-target]');
+              copySmallButtons.forEach(button => {
+                button.addEventListener('click', async function () {
+                  const targetId = button.getAttribute('data-copy-target');
+                  const targetElement = document.getElementById(targetId);
+                  if (targetElement) {
+                    const text = targetElement.textContent || targetElement.innerText;
+                    try {
+                      await navigator.clipboard.writeText(text.trim());
+                      const originalTitle = button.getAttribute('title');
+                      button.setAttribute('title', 'Tersalin!');
+                      button.style.color = '#10b981';
+                      button.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+                      setTimeout(() => {
+                        button.setAttribute('title', originalTitle);
+                        button.style.color = '';
+                        button.style.borderColor = '';
+                      }, 1500);
+                    } catch (err) {
+                      console.error('Gagal menyalin: ', err);
+                    }
+                  }
+                });
+              });
+
+              if (!payButton || !window.snap) {
+                return;
+              }
+
+              payButton.addEventListener('click', function () {
+                window.snap.pay('{{ snap_token|escapejs }}', {
+                  onSuccess: function (result) {
+                    resultInput.value = JSON.stringify(result);
+                    resultForm.submit();
+                  },
+                  onPending: function () {
+                    alert('Pembayaran masih pending di Midtrans. Selesaikan transaksi terlebih dahulu.');
+                  },
+                  onError: function () {
+                    alert('Pembayaran gagal diproses di Midtrans.');
+                  },
+                  onClose: function () {
+                    console.log('Popup Midtrans ditutup sebelum transaksi selesai.');
+                  },
+                });
+              });
+            });
+          </script>
+        {% endif %}
+
+
+
+        <script>
+          document.addEventListener('DOMContentLoaded', function () {
+            const provinceSelect = document.getElementById('id_province');
+            const regencySelect = document.getElementById('id_regency');
+            if (!provinceSelect || !regencySelect) return;
+
+            let regencyMap = {};
+
+            function setRegencyOptions(values) {
+              const currentValue = regencySelect.value;
+              regencySelect.innerHTML = '';
+              const defaultOption = document.createElement('option');
+              defaultOption.value = '';
+              defaultOption.textContent = 'Pilih Kabupaten/Kota';
+              regencySelect.appendChild(defaultOption);
+
+              values.forEach(function (regency) {
+                const option = document.createElement('option');
+                option.value = regency;
+                option.textContent = regency;
+                if (regency === currentValue) {
+                  option.selected = true;
+                }
+                regencySelect.appendChild(option);
+              });
+            }
+
+            function updateRegencies() {
+              const selectedProvince = provinceSelect.value;
+              if (selectedProvince && regencyMap[selectedProvince]) {
+                setRegencyOptions(regencyMap[selectedProvince]);
+              } else {
+                setRegencyOptions([]);
+              }
+            }
+
+            fetch('/static/data/indonesia_regions.json')
+              .then(function (response) {
+                if (!response.ok) {
+                  throw new Error('Gagal memuat data wilayah');
+                }
+                return response.json();
+              })
+              .then(function (data) {
+                Object.values(data).forEach(function (provinceGroup) {
+                  Object.entries(provinceGroup).forEach(function (entry) {
+                    var provinceName = entry[0];
+                    var regencies = entry[1];
+                    regencyMap[provinceName] = regencies;
+                  });
+                });
+                updateRegencies();
+              })
+              .catch(function (error) {
+                console.error(error);
+              });
+
+            provinceSelect.addEventListener('change', updateRegencies);
+          });
+        </script>
+      </section>
+      {% endblock %}

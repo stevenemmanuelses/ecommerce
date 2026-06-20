@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="auth-panel">
+  <div class="auth-card">
+    <div class="auth-header">
+      <p class="eyebrow">Produk</p>
+      <h2>{{ title }}</h2>
+    </div>
+    <form method="post" enctype="multipart/form-data" class="auth-form">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <div class="form-actions">
+        <button type="submit" class="primary-button">Simpan</button>
+        {% if title == 'Edit Produk' %}
+          <button type="submit" name="delete_product" value="1" class="secondary-button danger-button" onclick="return confirm('Hapus produk ini? Tindakan ini tidak bisa dibatalkan.')">Hapus Produk</button>
+        {% endif %}
+      </div>
+    </form>
+    <p class="auth-footer"><a href="{% url 'store:dashboard' %}">Kembali ke dashboard</a></p>
+  </div>
+</section>
+{% endblock %}
