@@ -570,6 +570,7 @@ def return_request_view(request, order_id):
                     user=request.user,
                     reason=reason,
                     accepted_terms=agree,
+                    points_amount=int(order.total_price or 0),
                 )
                 success = 'Permintaan retur Anda telah dikirim. Tim kami akan memprosesnya segera.'
 
