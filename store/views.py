@@ -438,27 +438,33 @@ def order_review_view(request, order_id):
             except OrderItem.DoesNotExist:
                 error = 'Item tidak ditemukan dalam pesanan ini.'
             else:
-                try:
-                    rating_value = min(max(int(rating), 1), 5)
-                except (ValueError, TypeError):
-                    rating_value = 5
+                # Check if review already exists — only allow one review per item
+                if hasattr(order_item, 'review'):
+                    try:
+                        _ = order_item.review
+                        error = 'Anda sudah memberikan review untuk produk ini. Review hanya dapat diberikan satu kali.'
+                    except ProductReview.DoesNotExist:
+                        pass
 
-                review, created = ProductReview.objects.get_or_create(
-                    order_item=order_item,
-                    defaults={
-                        'user': request.user,
-                        'product': order_item.product,
-                        'rating': rating_value,
-                        'comment': comment,
-                    }
-                )
-                if not created:
-                    review.rating = rating_value
-                    review.comment = comment
-                    review.save(update_fields=['rating', 'comment'])
-                review_message = 'Review berhasil disimpan.'
+                if not error:
+                    try:
+                        rating_value = min(max(int(rating), 1), 5)
+                    except (ValueError, TypeError):
+                        rating_value = 5
+
+                    ProductReview.objects.create(
+                        order_item=order_item,
+                        user=request.user,
+                        product=order_item.product,
+                        rating=rating_value,
+                        comment=comment,
+                    )
+                    review_message = 'Review berhasil disimpan. Terima kasih atas ulasan Anda!'
     elif request.method == 'POST' and order.status != 'delivered':
         error = 'Pesanan harus sudah diterima sebelum memberikan review.'
+
+    # Re-fetch to include new reviews
+    order_items = order.items.select_related('product').all()
 
     return render(request, 'order_review.html', {
         'order': order,
