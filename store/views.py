@@ -192,6 +192,7 @@ def account_view(request):
         'form': form,
         'orders': orders,
         'success_message': success_message,
+        'profile': profile,
     })
 
 
