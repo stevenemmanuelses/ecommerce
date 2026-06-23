@@ -51,9 +51,15 @@
           <p class="product-description">{{ p.short_description }}</p>
           <div class="product-bottom">
             <span class="price">{{ p.price_idr }}</span>
-            <div class="button-row">
-              <a class="action-button" href="{% url 'store:product_detail' p.slug %}">Lihat Detail</a>
-              <a class="action-button secondary" href="{% url 'store:add_to_cart' p.slug %}">Tambah ke Keranjang</a>
+            <div class="product-actions">
+              <a class="prod-btn prod-btn-detail" href="{% url 'store:product_detail' p.slug %}">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                Detail
+              </a>
+              <a class="prod-btn prod-btn-cart" href="{% url 'store:add_to_cart' p.slug %}">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                Keranjang
+              </a>
             </div>
           </div>
         </div>
