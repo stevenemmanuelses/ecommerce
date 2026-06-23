@@ -230,7 +230,11 @@ def add_to_cart(request, slug):
     if not created:
         item.quantity += 1
         item.save()
-    return redirect(request.META.get('HTTP_REFERER', 'store:landing'))
+    
+    referer = request.META.get('HTTP_REFERER')
+    if referer and 'login' not in referer and 'register' not in referer:
+        return redirect(referer)
+    return redirect('store:cart')
 
 
 def cart_view(request):
