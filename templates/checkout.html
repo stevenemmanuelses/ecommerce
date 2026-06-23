@@ -7,7 +7,7 @@
     <div>
       <p class="eyebrow">Checkout</p>
       <h2>Ringkasan Pesanan</h2>
-      <p class="text-muted">Periksa kembali pesanan Anda, lalu lanjutkan ke halaman pembayaran Midtrans.</p>
+      <p class="text-muted">Periksa kembali pesanan Anda, lalu lanjutkan ke halaman pembayaran.</p>
     </div>
   </div>
 
@@ -63,6 +63,10 @@
           <span>Biaya Kirim</span>
           <span id="shipping-cost-display" style="font-weight: 600; color: #f3f4f6;">Rp {{ shipping_cost|intcomma }}</span>
         </div>
+        <div class="summary-line" id="points-discount-line" style="display: none; transition: all 0.3s ease;">
+          <span>Potongan Store Points</span>
+          <span id="points-discount-display" style="color: #34d399; font-weight: 600;">-Rp 0</span>
+        </div>
         {% if unique_code is not None %}
           <div class="summary-line">
             <span>Kode Unik</span>
@@ -80,7 +84,7 @@
         {% endif %}
       </div>
 
-      <!-- Courier and Payment Method Selection -->
+      <!-- Courier, Payment Method, and Store Points Selection -->
       <div class="checkout-options-section" style="margin-top: 24px; display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); margin-bottom: 24px;">
         <div class="selection-card" style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);">
           <div class="summary-header" style="margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 8px;">
@@ -105,7 +109,33 @@
               <option value="{{ code }}" {% if code == selected_payment_method %}selected{% endif %}>{{ name }}</option>
             {% endfor %}
           </select>
-          <p class="summary-note" style="margin-top: 8px; font-size: 0.8rem; color: #9ca3af;">Pembayaran diproses dengan aman via Midtrans.</p>
+          <p class="summary-note" style="margin-top: 8px; font-size: 0.8rem; color: #9ca3af;">Pembayaran diproses dengan aman.</p>
+        </div>
+
+        <div class="selection-card" style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);">
+          <div class="summary-header" style="margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 8px;">
+            <p class="eyebrow" style="margin:0;">Store Points</p>
+            <h3 style="margin: 4px 0 0 0; font-size: 1.1rem; color: #f3f4f6;">Gunakan Poin</h3>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 0.9rem; color: #9ca3af;">Saldo Poin Anda:</span>
+              <strong style="color: #fbbf24; font-size: 1rem;">{{ profile.store_points|default:0|intcomma }} pts</strong>
+            </div>
+            {% if profile and profile.store_points > 0 %}
+              <div style="display: flex; align-items: center; gap: 10px; margin-top: 6px; padding: 10px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid rgba(255,255,255,0.04);">
+                <input type="checkbox" id="use-points-checkbox" style="width: 18px; height: 18px; cursor: pointer; accent-color: #a78bfa;">
+                <label for="use-points-checkbox" style="font-size: 0.9rem; color: #f3f4f6; cursor: pointer; user-select: none;">Gunakan Store Points</label>
+              </div>
+              <div id="points-input-wrapper" style="display: none; margin-top: 6px;">
+                <label for="points-to-use-input" style="display: block; font-size: 0.8rem; color: #9ca3af; margin-bottom: 4px;">Jumlah Poin yang Digunakan:</label>
+                <input type="number" id="points-to-use-input" min="0" max="{{ profile.store_points }}" value="0" style="width: 100%; padding: 10px; border-radius: 8px; background: #111827; color: #f3f4f6; border: 1px solid rgba(255,255,255,0.15); font-size: 0.95rem; outline: none;" placeholder="Contoh: 5000">
+                <span id="points-error-msg" style="display: none; color: #f87171; font-size: 0.78rem; margin-top: 4px;"></span>
+              </div>
+            {% else %}
+              <p style="margin: 0; font-size: 0.85rem; color: #9ca3af; font-style: italic;">Anda tidak memiliki Store Points untuk digunakan.</p>
+            {% endif %}
+          </div>
         </div>
       </div>
 
@@ -152,6 +182,7 @@
           {% csrf_token %}
           <input type="hidden" name="courier" id="hidden-courier" value="{{ selected_courier }}">
           <input type="hidden" name="payment_method" id="hidden-payment-method" value="{{ selected_payment_method }}">
+          <input type="hidden" name="points_to_use" id="hidden-points-to-use" value="0">
           <p class="summary-note">Klik tombol di bawah untuk membuat pesanan dan melanjutkan ke halaman unggah bukti transfer.</p>
           <button type="submit" class="primary-button">Buat Pesanan & Bayar</button>
         </form>
@@ -244,13 +275,25 @@
       const shippingCostDisplay = document.getElementById('shipping-cost-display');
       const totalPriceDisplay = document.getElementById('total-price-display');
 
+      // Store Points Elements
+      const availablePoints = parseInt("{{ profile.store_points|default:0 }}") || 0;
+      const usePointsCheckbox = document.getElementById('use-points-checkbox');
+      const pointsInputWrapper = document.getElementById('points-input-wrapper');
+      const pointsToUseInput = document.getElementById('points-to-use-input');
+      const hiddenPointsToUse = document.getElementById('hidden-points-to-use');
+      const pointsDiscountLine = document.getElementById('points-discount-line');
+      const pointsDiscountDisplay = document.getElementById('points-discount-display');
+      const pointsErrorMsg = document.getElementById('points-error-msg');
+
       function formatRupiah(num) {
         return 'Rp ' + num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
       }
 
       function updateShippingAndTotal() {
-        const selectedCourier = courierSelect.value;
-        hiddenCourier.value = selectedCourier;
+        const selectedCourier = courierSelect ? courierSelect.value : 'jne';
+        if (hiddenCourier) {
+          hiddenCourier.value = selectedCourier;
+        }
         if (courierSummaryDisplay) {
           courierSummaryDisplay.textContent = selectedCourier.toUpperCase();
         }
@@ -266,7 +309,59 @@
           shippingCostDisplay.textContent = formatRupiah(currentShipping);
         }
 
-        const finalTotal = subtotal + currentShipping + uniqueCode;
+        const totalBeforeDiscount = subtotal + currentShipping + uniqueCode;
+        let pointsToUse = 0;
+
+        if (usePointsCheckbox && usePointsCheckbox.checked) {
+          if (pointsInputWrapper) pointsInputWrapper.style.display = 'block';
+          
+          const maxPointsAllowed = Math.min(availablePoints, totalBeforeDiscount);
+          if (pointsToUseInput) {
+            pointsToUseInput.max = maxPointsAllowed;
+            
+            // If the input value is 0 and we just checked it, or it is greater than maxPointsAllowed
+            let enteredValue = parseInt(pointsToUseInput.value) || 0;
+            
+            // If we just enabled it (value was 0), default to maxPointsAllowed
+            if (enteredValue === 0 && pointsToUseInput.dataset.justEnabled === "true") {
+              enteredValue = maxPointsAllowed;
+              pointsToUseInput.value = enteredValue;
+              pointsToUseInput.dataset.justEnabled = "false";
+            }
+            
+            if (enteredValue > maxPointsAllowed) {
+              enteredValue = maxPointsAllowed;
+              pointsToUseInput.value = enteredValue;
+              if (pointsErrorMsg) {
+                pointsErrorMsg.textContent = "Disesuaikan ke batas maksimum tagihan atau saldo poin.";
+                pointsErrorMsg.style.display = "block";
+              }
+            } else {
+              if (pointsErrorMsg) pointsErrorMsg.style.display = "none";
+            }
+            pointsToUse = enteredValue;
+          }
+        } else {
+          if (pointsInputWrapper) pointsInputWrapper.style.display = 'none';
+          if (pointsToUseInput) {
+            pointsToUseInput.value = 0;
+          }
+          if (pointsErrorMsg) pointsErrorMsg.style.display = "none";
+          pointsToUse = 0;
+        }
+
+        if (pointsToUse > 0) {
+          if (pointsDiscountLine) pointsDiscountLine.style.display = 'flex';
+          if (pointsDiscountDisplay) pointsDiscountDisplay.textContent = '- ' + formatRupiah(pointsToUse);
+        } else {
+          if (pointsDiscountLine) pointsDiscountLine.style.display = 'none';
+        }
+
+        if (hiddenPointsToUse) {
+          hiddenPointsToUse.value = pointsToUse;
+        }
+
+        const finalTotal = Math.max(0, totalBeforeDiscount - pointsToUse);
         if (totalPriceDisplay) {
           totalPriceDisplay.textContent = formatRupiah(finalTotal);
         }
@@ -280,6 +375,30 @@
           hiddenPaymentMethod.value = paymentMethodSelect.value;
         });
       }
+
+      if (usePointsCheckbox) {
+        usePointsCheckbox.addEventListener('change', function() {
+          if (usePointsCheckbox.checked) {
+            if (pointsToUseInput) {
+              pointsToUseInput.dataset.justEnabled = "true";
+            }
+          }
+          updateShippingAndTotal();
+        });
+      }
+
+      if (pointsToUseInput) {
+        pointsToUseInput.addEventListener('input', function() {
+          let enteredValue = parseInt(pointsToUseInput.value) || 0;
+          if (enteredValue < 0) {
+            pointsToUseInput.value = 0;
+          }
+          updateShippingAndTotal();
+        });
+      }
+
+      // Initialize calculations
+      updateShippingAndTotal();
     });
   </script>
 </section>
