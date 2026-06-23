@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<section class="search-results-page">
+  <div class="search-header">
+    <p class="eyebrow">Hasil Pencarian</p>
+    {% if query %}
+      <h2>Hasil untuk "{{ query }}"</h2>
+      <p>Ditemukan {{ products|length }} produk yang cocok.</p>
+    {% else %}
+      <h2>Cari Parfum</h2>
+      <p>Masukkan kata kunci untuk mencari parfum yang Anda inginkan.</p>
+    {% endif %}
+  </div>
+
+  {% if products %}
+    <div class="product-row">
+      {% for p in products %}
+        <article class="product-card">
+          <div class="product-thumb">
+            {% if p.image %}
+              <img src="{{ p.image.url }}" alt="{{ p.name }}" loading="lazy">
+            {% elif p.image_url %}
+              {% if p.image_url|slice:":7" == "http://" or p.image_url|slice:":8" == "https://" or p.image_url|slice:":1" == "/" %}
+                <img src="{{ p.image_url }}" alt="{{ p.name }}" loading="lazy">
+              {% else %}
+                <img src="{% static p.image_url %}" alt="{{ p.name }}" loading="lazy">
+              {% endif %}
+            {% else %}
+              <div class="thumb-placeholder">Foto produk</div>
+            {% endif %}
+          </div>
+          <div class="product-meta">
+            <a href="{% url 'store:product_detail' p.slug %}">{{ p.name }}</a>
+            <p class="product-description">{{ p.short_description }}</p>
+            <div class="product-bottom">
+              <span class="price">{{ p.price_idr }}</span>
+              <div class="button-row">
+                <a class="action-button" href="{% url 'store:product_detail' p.slug %}">Lihat Detail</a>
+                <a class="action-button secondary" href="{% url 'store:add_to_cart' p.slug %}">Tambah ke Keranjang</a>
+              </div>
+            </div>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    {% if query %}
+      <div class="empty-search">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="8" y1="8" x2="14" y2="14"></line><line x1="14" y1="8" x2="8" y2="14"></line></svg>
+        <p>Tidak ditemukan produk untuk "<strong>{{ query }}</strong>"</p>
+        <p class="sub-text">Coba gunakan kata kunci lain atau jelajahi katalog kami.</p>
+        <a class="primary-button" href="{% url 'store:landing' %}">Lihat Semua Produk</a>
+      </div>
+    {% endif %}
+  {% endif %}
+</section>
+{% endblock %}
