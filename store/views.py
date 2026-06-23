@@ -11,7 +11,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
 from django.db import transaction
-from django.db.models import Max
+from django.db.models import Max, Q
 from django.views.decorators.cache import never_cache
 from .forms import ProductForm, CustomUserCreationForm, CheckoutAddressForm, AccountProfileForm
 from .models import Product, CartItem, Category, Order, ReturnRequest, UserProfile, OrderItem, ProductReview
@@ -133,6 +133,16 @@ def transfer_session_cart_to_user(request):
 def landing_view(request):
     products = Product.objects.all()
     return render(request, 'landing.html', {'products': products})
+
+
+def search_view(request):
+    query = request.GET.get('q', '').strip()
+    products = Product.objects.all()
+    if query:
+        products = products.filter(
+            Q(name__icontains=query) | Q(description__icontains=query)
+        )
+    return render(request, 'search_results.html', {'products': products, 'query': query})
 
 
 def logout_view(request):
