@@ -61,6 +61,7 @@ class Order(models.Model):
     shipping_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     total_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     points_used = models.PositiveIntegerField(default=0)
+    points_refunded = models.BooleanField(default=False)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending_payment')
     courier = models.CharField(max_length=20, choices=COURIER_CHOICES, default='jne')
     payment_method = models.CharField(max_length=30, choices=PAYMENT_METHOD_CHOICES, default='qris')
@@ -118,6 +119,17 @@ class Order(models.Model):
             {'key': 'delivered', 'label': 'Terkirim', 'active': is_delivered},
         ]
         return steps
+
+    def cancel_order_and_refund_points(self):
+        if self.status != 'cancelled':
+            self.status = 'cancelled'
+            if self.points_used > 0 and not self.points_refunded:
+                profile = getattr(self.user, 'profile', None)
+                if profile:
+                    profile.store_points += self.points_used
+                    profile.save(update_fields=['store_points'])
+                    self.points_refunded = True
+            self.save(update_fields=['status', 'points_refunded'])
 
 class OrderItem(models.Model):
     order = models.ForeignKey('Order', on_delete=models.CASCADE, related_name='items')
