@@ -52,6 +52,36 @@
     </form>
   </div>
 
+  <!-- Store Points Card -->
+  <section class="orders-panel">
+    <div class="orders-header">
+      <p class="eyebrow">Poin Belanja</p>
+      <h3>Store Points</h3>
+      <p>Poin belanja Anda yang bisa digunakan untuk pembelian berikutnya.</p>
+    </div>
+    <div style="background: rgba(251, 191, 36, 0.05); border: 1px solid rgba(251, 191, 36, 0.15); border-radius: 14px; padding: 20px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+      <div style="display: flex; align-items: center; gap: 14px;">
+        <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(251, 191, 36, 0.12); display: flex; align-items: center; justify-content: center;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+        </div>
+        <div>
+          <p style="margin: 0; font-size: 0.82rem; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 500;">Saldo Poin Anda</p>
+          <p style="margin: 4px 0 0 0; font-size: 1.6rem; font-weight: 700; color: #fbbf24;">{{ profile.store_points|default:0 }} <span style="font-size: 0.85rem; color: #cbd5e1; font-weight: 500;">poin</span></p>
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 4px; text-align: right;">
+        <span style="font-size: 0.78rem; color: #9ca3af;">Setara dengan</span>
+        <span style="font-size: 1rem; font-weight: 600; color: #60a5fa;">Rp {{ profile.store_points|default:0|intcomma }}</span>
+      </div>
+    </div>
+    <div style="margin-top: 14px; padding: 14px 18px; background: rgba(59, 130, 246, 0.04); border: 1px solid rgba(59, 130, 246, 0.1); border-radius: 10px;">
+      <p style="margin: 0; font-size: 0.85rem; color: #94a3b8; line-height: 1.6;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 4px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+        Store points didapat dari pengajuan retur yang disetujui admin. Poin hanya bisa digunakan untuk membeli produk lain dan <strong style="color: #f87171;">tidak dapat di-withdraw</strong>.
+      </p>
+    </div>
+  </section>
+
   <section class="orders-panel">
     <div class="orders-header">
       <p class="eyebrow">Pesanan Saya</p>
@@ -102,6 +132,13 @@
                 <a class="action-button secondary" href="{% url 'store:download_invoice' order.id %}" style="padding: 8px 16px; border-radius: 8px; background: rgba(16, 185, 129, 0.1); color: #34d399; text-decoration: none; font-size: 0.9rem; font-weight: 500; border: 1px solid rgba(16, 185, 129, 0.2); display: flex; align-items: center; gap: 6px;">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                   Unduh Invoice
+                </a>
+              {% endif %}
+
+              {% if order.status == 'delivered' and order.paid %}
+                <a class="action-button" href="{% url 'store:return_request' order.id %}" style="padding: 8px 16px; border-radius: 8px; background: rgba(168, 85, 247, 0.1); color: #a855f7; text-decoration: none; font-size: 0.9rem; font-weight: 500; border: 1px solid rgba(168, 85, 247, 0.2); display: flex; align-items: center; gap: 6px;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+                  Ajukan Retur
                 </a>
               {% endif %}
 
