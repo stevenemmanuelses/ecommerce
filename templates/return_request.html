@@ -1,91 +1,247 @@
 {% extends 'base.html' %}
+{% load humanize %}
 {% block content %}
-<section class="checkout-page">
+<section class="return-page">
   <div class="page-header">
     <div>
       <p class="eyebrow">Permintaan Retur</p>
-      <h2>Ajukan pengembalian barang</h2>
-      <p class="text-muted">Pastikan Anda setuju dengan syarat dan ketentuan retur sebelum mengirim permintaan.</p>
+      <h2>Ajukan Pengembalian Barang</h2>
+      <p>Pastikan Anda membaca dan menyetujui semua syarat dan ketentuan retur sebelum mengirim permintaan.</p>
     </div>
   </div>
-  <div class="checkout-grid">
-    <div class="checkout-form-card">
+
+  <div class="return-layout">
+    <!-- Main Form Area -->
+    <div class="return-main">
       {% if error %}
         <div class="notification error">{{ error }}</div>
       {% endif %}
       {% if success %}
         <div class="notification success">{{ success }}</div>
-        <div class="summary-note">Permintaan retur telah dikirim. Tim kami akan meninjau permintaan Anda dalam waktu 1-2 hari kerja.</div>
+        <div class="return-success-card">
+          <div class="return-success-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </div>
+          <h3>Permintaan Retur Terkirim</h3>
+          <p>Tim kami akan meninjau permintaan Anda dalam waktu <strong>1-2 hari kerja</strong>. Anda akan mendapatkan store points jika retur disetujui.</p>
+          <a class="primary-button" href="{% url 'store:account' %}" style="margin-top: 10px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            Kembali ke Akun
+          </a>
+        </div>
       {% elif return_request %}
-        <div class="summary-header">
-          <p class="eyebrow">Status Retur</p>
-          <h3>Permintaan sudah diajukan</h3>
+        <!-- Existing Return Request Status -->
+        <div class="return-status-card">
+          <div class="return-status-header">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+            <h3>Permintaan Sudah Diajukan</h3>
+          </div>
+
+          <div class="return-status-badge-row">
+            <span>Status saat ini:</span>
+            <span class="return-status-badge return-status-{{ return_request.status }}">{{ return_request.get_status_display }}</span>
+          </div>
+
+          <div class="return-detail-grid">
+            <div class="return-detail-item">
+              <span class="return-detail-label">Nomor Pesanan</span>
+              <span class="return-detail-value">#{{ order.id }}</span>
+            </div>
+            <div class="return-detail-item">
+              <span class="return-detail-label">Diajukan Pada</span>
+              <span class="return-detail-value">{{ return_request.created_at|date:'d M Y H:i' }}</span>
+            </div>
+            <div class="return-detail-item" style="grid-column: 1 / -1;">
+              <span class="return-detail-label">Alasan Retur</span>
+              <span class="return-detail-value">{{ return_request.reason }}</span>
+            </div>
+          </div>
+
+          {% if return_request.status == 'approved' %}
+            <div class="return-points-awarded">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+              <div>
+                <strong>Store Points Diberikan!</strong>
+                <p>Anda menerima <strong style="color: #fbbf24;">{{ order.total_price|floatformat:0|intcomma }}</strong> poin dari transaksi ini.</p>
+              </div>
+            </div>
+          {% elif return_request.status == 'pending' %}
+            <div class="return-pending-note">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              <p>Permintaan Anda sedang ditinjau oleh tim kami. Mohon tunggu 1-2 hari kerja.</p>
+            </div>
+          {% elif return_request.status == 'rejected' %}
+            <div class="return-rejected-note">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+              <p>Permintaan retur Anda ditolak. Hubungi layanan pelanggan untuk informasi lebih lanjut.</p>
+            </div>
+          {% endif %}
+
+          <a class="secondary-button" href="{% url 'store:account' %}" style="margin-top: 8px; display: inline-flex; align-items: center; gap: 6px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            Kembali ke Akun
+          </a>
         </div>
-        <div class="notification success" style="background: rgba(251, 191, 36, 0.12); color: #78350f; border-color: rgba(251, 191, 36, 0.25);">
-          Status saat ini: <strong>{{ return_request.get_status_display }}</strong>
-        </div>
-        <div class="return-terms">
-          <h4>Detail Pengajuan</h4>
-          <ul>
-            <li>Nomor pesanan: <strong>#{{ order.id }}</strong></li>
-            <li>Status: <strong>{{ return_request.get_status_display }}</strong></li>
-            <li>Alasan retur: {{ return_request.reason }}</li>
-            <li>Diajukan pada: {{ return_request.created_at|date:'d M Y H:i' }}</li>
-          </ul>
-        </div>
-        <div class="summary-note">Silakan tunggu review dari admin. Jika ditolak, Anda dapat menghubungi layanan pelanggan untuk informasi lebih lanjut.</div>
       {% else %}
-        <div class="summary-header">
-          <p class="eyebrow">Detail Retur</p>
-          <h3>Nomor pesanan #{{ order.id }}</h3>
+        <!-- Return Request Form -->
+        <div class="return-form-card">
+          <div class="return-form-header">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+            <h3>Detail Retur — Order #{{ order.id }}</h3>
+          </div>
+
+          <!-- Terms & Conditions -->
+          <div class="return-terms-card">
+            <div class="return-terms-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+              <h4>Syarat & Ketentuan Retur</h4>
+            </div>
+            <div class="return-terms-list">
+              <div class="return-term-item">
+                <span class="return-term-number">1</span>
+                <div>
+                  <strong>Kelayakan Retur</strong>
+                  <p>Retur hanya berlaku untuk pesanan yang sudah dibayar dan berstatus <strong>Terkirim</strong>. Pesanan yang belum dibayar atau masih dalam proses tidak dapat diretur.</p>
+                </div>
+              </div>
+              <div class="return-term-item">
+                <span class="return-term-number">2</span>
+                <div>
+                  <strong>Kondisi Produk</strong>
+                  <p>Produk harus dikembalikan dalam <strong>kondisi asli</strong> — belum dipakai, tidak rusak, dan dalam kemasan yang baik. Produk yang sudah digunakan atau rusak akibat kelalaian pembeli tidak dapat diterima.</p>
+                </div>
+              </div>
+              <div class="return-term-item">
+                <span class="return-term-number">3</span>
+                <div>
+                  <strong>Batas Waktu Pengajuan</strong>
+                  <p>Permintaan retur harus diajukan <strong>maksimal 7 hari</strong> setelah pesanan diterima. Pengajuan setelah batas waktu tidak dapat diproses.</p>
+                </div>
+              </div>
+              <div class="return-term-item">
+                <span class="return-term-number">4</span>
+                <div>
+                  <strong>Pengembalian Dana via Store Points</strong>
+                  <p>Dana tidak dikembalikan secara tunai. Sebagai gantinya, Anda akan menerima <strong style="color: #fbbf24;">Store Points</strong> senilai total transaksi yang di-retur. Store points <strong style="color: #f87171;">tidak dapat di-withdraw</strong> atau dicairkan.</p>
+                </div>
+              </div>
+              <div class="return-term-item">
+                <span class="return-term-number">5</span>
+                <div>
+                  <strong>Penggunaan Store Points</strong>
+                  <p>Store points hanya dapat digunakan untuk <strong>membeli produk lain</strong> di website Verity. 1 poin = Rp 1. Poin akan otomatis tersedia di akun Anda setelah retur disetujui admin.</p>
+                </div>
+              </div>
+              <div class="return-term-item">
+                <span class="return-term-number">6</span>
+                <div>
+                  <strong>Proses Review</strong>
+                  <p>Tim layanan pelanggan akan meninjau permintaan retur dalam <strong>1-2 hari kerja</strong>. Isi alasan retur dengan jelas dan detail untuk mempercepat proses.</p>
+                </div>
+              </div>
+              <div class="return-term-item">
+                <span class="return-term-number">7</span>
+                <div>
+                  <strong>Keputusan Final</strong>
+                  <p>Keputusan admin mengenai retur bersifat <strong>final</strong>. Jika retur ditolak, Anda dapat menghubungi layanan pelanggan untuk penjelasan lebih lanjut.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Store Points Info -->
+          <div class="return-points-info">
+            <div class="return-points-info-header">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+              <h4>Estimasi Store Points</h4>
+            </div>
+            <p class="return-points-description">Jika retur disetujui, Anda akan menerima store points sebesar:</p>
+            <div class="return-points-amount">
+              <span class="return-points-value">{{ order.total_price|floatformat:0|intcomma }}</span>
+              <span class="return-points-label">poin (setara Rp {{ order.total_price|floatformat:0|intcomma }})</span>
+            </div>
+          </div>
+
+          <!-- Form -->
+          <form method="post" class="return-form">
+            {% csrf_token %}
+            <div class="pf-field">
+              <label for="reason">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                Alasan Retur <span class="pf-required">*</span>
+              </label>
+              <textarea id="reason" name="reason" rows="5" placeholder="Jelaskan alasan Anda ingin mengembalikan produk. Sertakan detail seperti kondisi produk, masalah yang ditemukan, dll." required style="padding: 12px 16px; background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 12px; color: #f3f4f6; font-size: 0.92rem; font-family: 'Inter', system-ui, sans-serif; transition: all 0.2s ease; width: 100%; resize: vertical;">{{ reason }}</textarea>
+            </div>
+
+            <div class="return-agree-section">
+              <label class="return-checkbox-label">
+                <input type="checkbox" name="agree_terms" required>
+                <span class="return-checkbox-custom">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </span>
+                <span>Saya telah membaca dan <strong>menyetujui semua syarat & ketentuan retur</strong> di atas, termasuk bahwa pengembalian dana berupa Store Points yang tidak dapat di-withdraw.</span>
+              </label>
+            </div>
+
+            <div class="return-form-actions">
+              <a class="secondary-button" href="{% url 'store:account' %}" style="display: inline-flex; align-items: center; gap: 6px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                Kembali
+              </a>
+              <button type="submit" class="primary-button" style="display: inline-flex; align-items: center; gap: 6px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                Kirim Permintaan Retur
+              </button>
+            </div>
+          </form>
         </div>
-        <div class="return-terms">
-          <h4>Syarat Retur</h4>
-          <ul>
-            <li>Retur hanya berlaku untuk pesanan yang sudah dibayar.</li>
-            <li>Produk harus dikembalikan dalam kondisi baik, belum dipakai, dan tidak rusak.</li>
-            <li>Permintaan diajukan maksimal 7 hari setelah pesanan diterima.</li>
-            <li>Isi alasan retur dengan jelas agar proses lebih cepat.</li>
-            <li>Tim layanan pelanggan akan meninjau dan mengonfirmasi status retur.</li>
-          </ul>
-        </div>
-        <form method="post" class="checkout-form">
-          {% csrf_token %}
-          <div class="form-group">
-            <label for="reason">Alasan Retur</label>
-            <textarea id="reason" name="reason" rows="5" placeholder="Jelaskan alasan Anda ingin mengembalikan produk" required>{{ reason }}</textarea>
-          </div>
-          <div class="form-group checkbox-group">
-            <label class="checkbox-label">
-              <input type="checkbox" name="agree_terms" required>
-              Saya setuju dengan syarat dan ketentuan retur.
-            </label>
-          </div>
-          <div class="button-row" style="margin-top: 4px;">
-            <button type="submit" class="primary-button">Kirim Permintaan Retur</button>
-            <a class="secondary-button" href="{% url 'store:dashboard' %}">Kembali ke Dashboard</a>
-          </div>
-        </form>
       {% endif %}
     </div>
 
-    <div class="order-summary-card">
-      <div class="summary-header">
-        <p class="eyebrow">Ringkasan Retur</p>
-        <h3>Proses Cepat dan Mudah</h3>
-      </div>
-      <div class="summary-note">
-        <p>Setelah permintaan dikirim, tim kami akan memeriksa kondisi retur dan menghubungi Anda melalui email.</p>
-        <p>Pastikan pesanan sudah dibayar dan alasan retur jelas agar proses dapat berjalan lancar.</p>
-      </div>
-      <div class="summary-totals">
-        <div class="summary-line">
-          <span>Status</span>
-          <strong>{% if return_request %}{{ return_request.get_status_display }}{% else %}Pending Review{% endif %}</strong>
+    <!-- Sidebar -->
+    <div class="return-sidebar">
+      <div class="return-sidebar-card">
+        <div class="return-sidebar-header">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+          <h4>Cara Kerja Store Points</h4>
         </div>
-        <div class="summary-line">
-          <span>Estimasi Tanggapan</span>
-          <strong>1-2 hari kerja</strong>
+        <div class="return-sidebar-steps">
+          <div class="return-step">
+            <span class="return-step-num">1</span>
+            <div>
+              <strong>Ajukan Retur</strong>
+              <p>Isi formulir retur dengan alasan yang jelas.</p>
+            </div>
+          </div>
+          <div class="return-step">
+            <span class="return-step-num">2</span>
+            <div>
+              <strong>Review Admin</strong>
+              <p>Tim kami meninjau permintaan dalam 1-2 hari kerja.</p>
+            </div>
+          </div>
+          <div class="return-step">
+            <span class="return-step-num">3</span>
+            <div>
+              <strong>Terima Store Points</strong>
+              <p>Jika disetujui, poin otomatis masuk ke akun Anda.</p>
+            </div>
+          </div>
+          <div class="return-step">
+            <span class="return-step-num">4</span>
+            <div>
+              <strong>Gunakan untuk Belanja</strong>
+              <p>Pakai poin untuk membeli produk lain di checkout.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="return-sidebar-card return-sidebar-warning">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        <div>
+          <strong>Penting!</strong>
+          <p>Store Points <strong>tidak dapat dicairkan</strong> menjadi uang tunai dan hanya bisa digunakan untuk pembelian di website Verity.</p>
         </div>
       </div>
     </div>
