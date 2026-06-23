@@ -6,59 +6,181 @@
     <div>
       <p class="eyebrow">Kelola Pesanan</p>
       <h2>Daftar Pesanan</h2>
-      <p>Ubah status pesanan pelanggan dari halaman ini.</p>
+      <p>Kelola status pesanan, isi nomor resi pengiriman, dan pantau seluruh transaksi pelanggan.</p>
     </div>
   </div>
 
-  <div class="table-card">
-    <table class="order-table">
-      <thead>
-        <tr>
-          <th>Order</th>
-          <th>Pelanggan</th>
-          <th>Tanggal</th>
-          <th>Status</th>
-          <th>Ongkir</th>
-          <th>Paid</th>
-          <th>Bukti</th>
-          <th>Aksi</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for order in orders %}
-          <tr>
-            <td>#{{ order.id }}</td>
-            <td>{{ order.user.username }}</td>
-            <td>{{ order.created_at|date:'d M Y H:i' }}</td>
-            <td>{{ order.get_status_display }}</td>
-            <td>Rp {{ order.shipping_cost|intcomma }}</td>
-            <td>{{ order.paid|yesno:"Ya,Tidak" }}</td>
-            <td>
-              {% if order.payment_proof %}
-                <a href="{{ order.payment_proof.url }}" target="_blank" style="color: #60a5fa; text-decoration: underline; font-weight: 500;">Lihat Bukti</a>
-              {% else %}
-                <span style="color: #6b7280;">-</span>
-              {% endif %}
-            </td>
-            <td>
-              <form method="post" action="{% url 'store:update_order_status' order.id %}">
-                {% csrf_token %}
-                <select name="status">
-                  {% for value,label in order.STATUS_CHOICES %}
-                    <option value="{{ value }}" {% if order.status == value %}selected{% endif %}>{{ label }}</option>
-                  {% endfor %}
-                </select>
-                <button type="submit" class="primary-button">Simpan</button>
-              </form>
-            </td>
-          </tr>
-        {% empty %}
-          <tr>
-            <td colspan="7">Belum ada pesanan.</td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  <!-- Stats Bar -->
+  <div class="order-stats-bar">
+    <div class="order-stat-chip stat-all">
+      <span>Semua</span>
+      <span class="stat-count">{{ orders|length }}</span>
+    </div>
+    <div class="order-stat-chip stat-pending">
+      <span>Menunggu Bayar</span>
+      <span class="stat-count" id="count-pending">0</span>
+    </div>
+    <div class="order-stat-chip stat-verification">
+      <span>Verifikasi</span>
+      <span class="stat-count" id="count-verification">0</span>
+    </div>
+    <div class="order-stat-chip stat-processing">
+      <span>Diproses</span>
+      <span class="stat-count" id="count-processing">0</span>
+    </div>
+    <div class="order-stat-chip stat-shipped">
+      <span>Dikirim</span>
+      <span class="stat-count" id="count-shipped">0</span>
+    </div>
+    <div class="order-stat-chip stat-delivered">
+      <span>Terkirim</span>
+      <span class="stat-count" id="count-delivered">0</span>
+    </div>
+    <div class="order-stat-chip stat-cancelled">
+      <span>Dibatalkan</span>
+      <span class="stat-count" id="count-cancelled">0</span>
+    </div>
   </div>
+
+  {% if orders %}
+    <div class="order-mgmt-grid">
+      {% for order in orders %}
+        <article class="order-mgmt-card" data-status="{{ order.status }}">
+          <!-- Card Header -->
+          <div class="order-mgmt-header">
+            <div class="order-mgmt-header-left">
+              <p class="order-id">Order #{{ order.id }}</p>
+              <p class="order-date">{{ order.created_at|date:'d M Y, H:i' }} WIB</p>
+            </div>
+            <div class="order-mgmt-header-right">
+              <span class="status-badge badge-{{ order.status }}">{{ order.get_status_display }}</span>
+              {% if order.paid %}
+                <span class="paid-badge paid-yes">✓ Sudah Dibayar</span>
+              {% else %}
+                <span class="paid-badge paid-no">Belum Dibayar</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Card Body -->
+          <div class="order-mgmt-body">
+            <!-- Details Grid -->
+            <div class="order-mgmt-details">
+              <div class="order-detail-item">
+                <span class="detail-label">Pelanggan</span>
+                <span class="detail-value">{{ order.user.username }}</span>
+              </div>
+              <div class="order-detail-item">
+                <span class="detail-label">Kurir</span>
+                <span class="detail-value text-uppercase">{{ order.get_courier_display }}</span>
+              </div>
+              <div class="order-detail-item">
+                <span class="detail-label">Metode Bayar</span>
+                <span class="detail-value">{{ order.get_payment_method_display }}</span>
+              </div>
+              <div class="order-detail-item">
+                <span class="detail-label">Ongkir</span>
+                <span class="detail-value">Rp {{ order.shipping_cost|floatformat:0|intcomma }}</span>
+              </div>
+              <div class="order-detail-item">
+                <span class="detail-label">Total Tagihan</span>
+                <span class="detail-value text-blue">Rp {{ order.total_price_with_code|floatformat:0|intcomma }}</span>
+              </div>
+              <div class="order-detail-item">
+                <span class="detail-label">Bukti Bayar</span>
+                {% if order.payment_proof %}
+                  <a href="{{ order.payment_proof.url }}" target="_blank" class="proof-link">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    Lihat Bukti
+                  </a>
+                {% else %}
+                  <span class="detail-value" style="color: #6b7280;">Belum ada</span>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Order Items -->
+            <div class="order-mgmt-items">
+              <p class="items-title">Produk Dipesan</p>
+              {% for item in order.items.all %}
+                <div class="order-item-row">
+                  <div>
+                    <span class="item-name">{{ item.product.name|default:"Produk dihapus" }}</span>
+                    <span class="item-qty"> × {{ item.quantity }}</span>
+                  </div>
+                  <span class="item-price">Rp {{ item.total_price|floatformat:0|intcomma }}</span>
+                </div>
+              {% empty %}
+                <div class="order-item-row">
+                  <span class="item-name" style="color: #6b7280;">Tidak ada item</span>
+                </div>
+              {% endfor %}
+            </div>
+
+            <!-- Tracking Number (Resi) Section -->
+            <div class="resi-section">
+              <p class="resi-label">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+                Nomor Resi Pengiriman
+              </p>
+              {% if order.tracking_number %}
+                <div class="resi-current">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  {{ order.tracking_number }}
+                </div>
+              {% endif %}
+              <div class="resi-input-group">
+                <input type="text" class="resi-input" 
+                       placeholder="{% if order.tracking_number %}Ubah nomor resi...{% else %}Masukkan nomor resi kurir...{% endif %}" 
+                       value="" form="form-order-{{ order.id }}" id="resi-{{ order.id }}">
+              </div>
+            </div>
+          </div>
+
+          <!-- Card Footer / Actions -->
+          <div class="order-mgmt-actions">
+            <form method="post" action="{% url 'store:update_order_status' order.id %}" id="form-order-{{ order.id }}" style="display: contents;">
+              {% csrf_token %}
+              <input type="hidden" name="tracking_number" id="resi-hidden-{{ order.id }}" value="">
+              <select name="status">
+                {% for value, label in order.STATUS_CHOICES %}
+                  <option value="{{ value }}" {% if order.status == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+              <button type="submit" class="btn-save-order" onclick="document.getElementById('resi-hidden-{{ order.id }}').value = document.getElementById('resi-{{ order.id }}').value;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                Simpan
+              </button>
+            </form>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="order-mgmt-empty">
+      <div class="empty-icon">📦</div>
+      <h3>Belum Ada Pesanan</h3>
+      <p>Pesanan dari pelanggan akan muncul di sini.</p>
+    </div>
+  {% endif %}
 </section>
+
+<script>
+// Count orders by status for stats bar
+document.addEventListener('DOMContentLoaded', function() {
+  var cards = document.querySelectorAll('.order-mgmt-card');
+  var counts = { pending_payment: 0, payment_verification: 0, processing: 0, shipped: 0, delivered: 0, cancelled: 0 };
+  cards.forEach(function(card) {
+    var status = card.getAttribute('data-status');
+    if (counts.hasOwnProperty(status)) counts[status]++;
+  });
+  var el = function(id) { return document.getElementById(id); };
+  if (el('count-pending')) el('count-pending').textContent = counts.pending_payment;
+  if (el('count-verification')) el('count-verification').textContent = counts.payment_verification;
+  if (el('count-processing')) el('count-processing').textContent = counts.processing;
+  if (el('count-shipped')) el('count-shipped').textContent = counts.shipped;
+  if (el('count-delivered')) el('count-delivered').textContent = counts.delivered;
+  if (el('count-cancelled')) el('count-cancelled').textContent = counts.cancelled;
+});
+</script>
 {% endblock %}
