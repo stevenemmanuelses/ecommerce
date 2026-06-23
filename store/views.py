@@ -86,7 +86,7 @@ def _to_integer_amount(amount):
 
 
 def _apply_short_session_expiry(request):
-    request.session.set_expiry(60)
+    request.session.set_expiry(900)
 
 
 
