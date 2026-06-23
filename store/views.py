@@ -491,7 +491,7 @@ def return_review_action(request, return_id):
 
 @staff_member_required
 def order_management_view(request):
-    orders = Order.objects.select_related('user').order_by('-created_at')
+    orders = Order.objects.select_related('user').prefetch_related('items__product').order_by('-created_at')
     return render(request, 'order_management.html', {'orders': orders})
 
 
@@ -500,6 +500,12 @@ def update_order_status(request, order_id):
     order = get_object_or_404(Order, id=order_id)
     if request.method == 'POST':
         status = request.POST.get('status')
+        tracking_number = request.POST.get('tracking_number', '').strip()
+
+        # Save tracking number if provided
+        if tracking_number:
+            order.tracking_number = tracking_number
+
         if status in dict(Order.STATUS_CHOICES):
             if status in ['processing', 'shipped', 'delivered'] and not order.paid:
                 with transaction.atomic():
@@ -520,6 +526,9 @@ def update_order_status(request, order_id):
                                 item.product.save()
             
             order.status = status
+            # Re-apply tracking number after potential select_for_update refresh
+            if tracking_number:
+                order.tracking_number = tracking_number
             order.save()
     return redirect('store:order_management')
 
