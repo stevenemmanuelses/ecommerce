@@ -65,6 +65,7 @@ class Order(models.Model):
     courier = models.CharField(max_length=20, choices=COURIER_CHOICES, default='jne')
     payment_method = models.CharField(max_length=30, choices=PAYMENT_METHOD_CHOICES, default='qris')
     payment_proof = models.ImageField(upload_to='payment_proofs/', blank=True, null=True)
+    tracking_number = models.CharField(max_length=100, blank=True, null=True, verbose_name='Nomor Resi')
 
     def __str__(self):
         return f"Order #{self.id} - {self.user.username}"
