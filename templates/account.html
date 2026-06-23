@@ -80,7 +80,7 @@
               </div>
             </div>
             <div class="order-details" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; font-size: 0.9rem; color: #d1d5db;">
-              <p style="margin:0;">No. Resi/Lacak: <strong style="color:#f3f4f6;">{{ order.tracking_code }}</strong></p>
+              <p style="margin:0;">No. Resi/Lacak: <strong style="color:#f3f4f6;">{% if order.tracking_number %}{{ order.tracking_number }}{% else %}{{ order.tracking_code }}{% endif %}</strong>{% if not order.tracking_number and order.status != 'cancelled' %} <span style="font-size: 0.78rem; color: #9ca3af; font-weight: 400;">(Menunggu resi dari admin)</span>{% endif %}</p>
               <p style="margin:0;">Kurir: <strong style="text-transform: uppercase; color:#f3f4f6;">{{ order.courier }}</strong></p>
               <p style="margin:0;">Metode Bayar: <strong style="color:#f3f4f6;">{{ order.get_payment_method_display }}</strong></p>
               <p style="margin:0;">Biaya Kirim: <strong style="color:#f3f4f6;">Rp {{ order.shipping_cost|floatformat:0|intcomma }}</strong></p>
