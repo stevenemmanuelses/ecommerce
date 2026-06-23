@@ -1,22 +1,51 @@
 {% extends 'base.html' %}
 {% block content %}
-<section class="auth-panel">
-  <div class="auth-card">
-    <div class="auth-header">
-      <p class="eyebrow">Produk</p>
+<section class="product-form-page">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Admin</p>
       <h2>{{ title }}</h2>
+      <p>{% if title == 'Edit Produk' %}Perbarui informasi produk yang sudah ada.{% else %}Tambahkan produk baru ke dalam katalog Verity.{% endif %}</p>
     </div>
-    <form method="post" enctype="multipart/form-data" class="auth-form">
+  </div>
+
+  <div class="product-form-card">
+    <form method="post" enctype="multipart/form-data" class="pf-form">
       {% csrf_token %}
-      {{ form.as_p }}
-      <div class="form-actions">
-        <button type="submit" class="primary-button">Simpan</button>
+
+      {% for field in form %}
+        <div class="pf-field {% if field.errors %}pf-field-error{% endif %}">
+          <label for="{{ field.id_for_label }}">
+            {{ field.label }}
+            {% if field.field.required %}<span class="pf-required">*</span>{% endif %}
+          </label>
+          {{ field }}
+          {% if field.help_text %}
+            <span class="pf-help">{{ field.help_text }}</span>
+          {% endif %}
+          {% for error in field.errors %}
+            <span class="pf-error-msg">{{ error }}</span>
+          {% endfor %}
+        </div>
+      {% endfor %}
+
+      <div class="pf-actions">
+        <button type="submit" class="primary-button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          Simpan Produk
+        </button>
         {% if title == 'Edit Produk' %}
-          <button type="submit" name="delete_product" value="1" class="secondary-button danger-button" onclick="return confirm('Hapus produk ini? Tindakan ini tidak bisa dibatalkan.')">Hapus Produk</button>
+          <button type="submit" name="delete_product" value="1" class="pf-delete-btn" onclick="return confirm('Hapus produk ini? Tindakan ini tidak bisa dibatalkan.')">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            Hapus Produk
+          </button>
         {% endif %}
+        <a href="{% url 'store:dashboard' %}" class="pf-back-link">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+          Kembali ke Dashboard
+        </a>
       </div>
     </form>
-    <p class="auth-footer"><a href="{% url 'store:dashboard' %}">Kembali ke dashboard</a></p>
   </div>
 </section>
 {% endblock %}
