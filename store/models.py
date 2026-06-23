@@ -154,6 +154,7 @@ class ReturnRequest(models.Model):
     reason = models.TextField(blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     accepted_terms = models.BooleanField(default=False)
+    points_amount = models.PositiveIntegerField(default=0)
     points_awarded = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -168,7 +169,7 @@ class ReturnRequest(models.Model):
         if not profile:
             return 0
 
-        points = int(self.order.total_price or 0)
+        points = self.points_amount or int(self.order.total_price or 0)
         if points <= 0:
             return 0
 
