@@ -323,14 +323,18 @@ def payment_view(request):
     subtotal = _to_integer_amount(sum(item.product.price * item.quantity for item in cart_items))
     available_points = profile.store_points if profile else 0
     
-    # Check points_to_use
-    points_to_use = int(request.session.get('points_to_use', 0) or 0)
+    # Check points_to_use from POST data
+    points_to_use = int(request.POST.get('points_to_use', 0) or 0)
     points_to_use = min(points_to_use, available_points, subtotal + shipping_cost)
     
     points_discount = points_to_use
     order_total = subtotal + shipping_cost - points_discount
     
     with transaction.atomic():
+        if points_to_use > 0 and profile:
+            profile.store_points = max(0, profile.store_points - points_to_use)
+            profile.save(update_fields=['store_points'])
+
         order = Order.objects.create(
             user=request.user,
             paid=False,
@@ -351,9 +355,6 @@ def payment_view(request):
         # Clear the cart items immediately
         CartItem.objects.filter(user=request.user).delete()
         
-    # Reset points session
-    request.session['points_to_use'] = 0
-    
     return redirect('store:order_payment', order_id=order.id)
 
 
@@ -514,29 +515,25 @@ def update_order_status(request, order_id):
             order.tracking_number = tracking_number
 
         if status in dict(Order.STATUS_CHOICES):
-            if status in ['processing', 'shipped', 'delivered'] and not order.paid:
-                with transaction.atomic():
-                    order = Order.objects.select_for_update().get(id=order_id)
-                    if not order.paid:
-                        if order.points_used > 0:
-                            profile = getattr(order.user, 'profile', None)
-                            if profile:
-                                profile.store_points = max(0, profile.store_points - order.points_used)
-                                profile.save(update_fields=['store_points'])
-                        
-                        order.paid = True
-                        
-                        # Decrement stock
-                        for item in order.items.all():
-                            if item.product:
-                                item.product.stock = max(0, item.product.stock - item.quantity)
-                                item.product.save()
-            
-            order.status = status
-            # Re-apply tracking number after potential select_for_update refresh
-            if tracking_number:
-                order.tracking_number = tracking_number
-            order.save()
+            if status == 'cancelled':
+                order.cancel_order_and_refund_points()
+            else:
+                if status in ['processing', 'shipped', 'delivered'] and not order.paid:
+                    with transaction.atomic():
+                        order = Order.objects.select_for_update().get(id=order_id)
+                        if not order.paid:
+                            order.paid = True
+                            
+                            # Decrement stock
+                            for item in order.items.all():
+                                if item.product:
+                                    item.product.stock = max(0, item.product.stock - item.quantity)
+                                    item.product.save()
+                
+                order.status = status
+                if tracking_number:
+                    order.tracking_number = tracking_number
+                order.save()
     return redirect('store:order_management')
 
 
@@ -682,6 +679,5 @@ def download_invoice(request, order_id):
 def cancel_order(request, order_id):
     order = get_object_or_404(Order, id=order_id, user=request.user)
     if not order.paid and order.status == 'pending_payment':
-        order.status = 'cancelled'
-        order.save()
+        order.cancel_order_and_refund_points()
     return redirect('store:account')
